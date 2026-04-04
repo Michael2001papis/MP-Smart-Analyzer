@@ -203,6 +203,87 @@ export function normalize(text) {
     .trim();
 }
 
+/**
+ * Heuristic garbage / noise detection (deterministic, explainable).
+ * Does not replace human judgment — blocks obviously non-report input.
+ */
+export function assessInputQuality(rawText, normalizedText) {
+  const rawTrim = String(rawText || "").trim();
+  const n = rawTrim.length;
+  const norm = String(normalizedText || "").trim();
+
+  if (n < 14) {
+    return { level: "invalid", code: "too_short" };
+  }
+
+  const letterMatches = rawTrim.match(/[a-zA-Z\u0590-\u05FF]/g) || [];
+  const letterCount = letterMatches.length;
+  if (letterCount < 10 && n < 120) {
+    return { level: "invalid", code: "too_few_letters" };
+  }
+
+  const nonWordish = rawTrim.replace(/[a-zA-Z0-9\u0590-\u05FF\s]/g, "").length;
+  if (n >= 24 && nonWordish / n > 0.45) {
+    return { level: "invalid", code: "noise" };
+  }
+
+  const alphaRatio = letterCount / Math.max(n, 1);
+  if (n >= 28 && alphaRatio < 0.22) {
+    return { level: "invalid", code: "noise" };
+  }
+
+  const compact = norm.replace(/[^a-z0-9\u0590-\u05FF]/g, "");
+  if (compact.length >= 10) {
+    const freq = {};
+    for (const ch of compact) freq[ch] = (freq[ch] || 0) + 1;
+    const maxF = Math.max(...Object.values(freq));
+    if (maxF / compact.length > 0.5) {
+      return { level: "invalid", code: "repetitive" };
+    }
+  }
+
+  const words = norm.split(/\s+/).filter(Boolean);
+  if (words.length < 4 && n < 140) {
+    return { level: "invalid", code: "too_few_words" };
+  }
+
+  if (words.length >= 4 && words.length <= 22) {
+    const uniq = new Set(words);
+    if (uniq.size === 1) return { level: "invalid", code: "repetitive_words" };
+    if (uniq.size / words.length <= 0.35) return { level: "invalid", code: "repetitive_words" };
+  }
+
+  return { level: "ok", code: "ok" };
+}
+
+/**
+ * After rules run: reject text that looks like prose without any analyzable signals.
+ */
+export function assessReportUsability(rawText, normalizedText, analysis) {
+  const q = assessInputQuality(rawText, normalizedText);
+  const rules = analysis?.matchedRules || [];
+  const tech = analysis?.facts?.tech || [];
+  const issues = analysis?.facts?.issueLines || [];
+  const hasConcrete = rules.length > 0 || tech.length > 0 || issues.length > 0;
+
+  if (q.level === "invalid" && q.code === "too_short" && hasConcrete) {
+    return { level: "ok", code: "ok" };
+  }
+  if (q.level === "invalid") {
+    return q;
+  }
+
+  const norm = String(normalizedText || "").trim();
+  const words = norm.split(/\s+/).filter(Boolean);
+
+  const hasSignal = rules.length > 0 || tech.length > 0 || issues.length > 0;
+  if (!hasSignal && norm.length < 520 && words.length < 40) {
+    return { level: "invalid", code: "no_clear_signal" };
+  }
+
+  return { level: "ok", code: "ok" };
+}
+
 function includesAll(haystack, needles) {
   return needles.every((n) => haystack.includes(n));
 }

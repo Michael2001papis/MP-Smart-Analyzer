@@ -6,145 +6,177 @@
     <title>MP Smart Analyzer</title>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
-    <main class="container">
-      <header class="hero" aria-label="מותג">
-        <div class="hero-main">
-          <div class="brand">
-            <div class="logo" aria-hidden="true">MP</div>
-            <div>
-              <h1 class="title" id="heroTitle">MP Smart Analyzer</h1>
-              <p class="hero-tagline" id="heroTagline">הדבק דוח → קבל פלט מובנה מיד</p>
-            </div>
+  <body class="mode-youth">
+    <main class="app">
+      <!-- 1 · Header -->
+      <header class="app-header">
+        <div class="header-brand">
+          <div class="logo-mark" aria-hidden="true">MP</div>
+          <div class="header-titles">
+            <h1 class="product-name">MP Smart Analyzer</h1>
+            <p class="product-tagline" id="productTagline"></p>
           </div>
-          <div class="hero-tools">
-            <label class="inline inline-compact">
-              <span id="uiLangLabel">ממשק</span>
-              <select id="lang" aria-label="שפת ממשק">
-                <option value="he" selected>עברית</option>
-                <option value="en">English</option>
-              </select>
-            </label>
-            <button id="btnSample" class="btn btn-secondary btn-sm" type="button">טען דוגמה</button>
-            <button id="btnClear" class="btn btn-secondary btn-sm" type="button">נקה</button>
+        </div>
+        <div class="header-actions">
+          <div class="sys-pill" aria-live="polite">
+            <span class="sys-dot" aria-hidden="true"></span>
+            <span id="systemStatusText"></span>
           </div>
+          <div class="exp-toggle" role="group" aria-labelledby="expModeLabel">
+            <span class="exp-toggle-label" id="expModeLabel"></span>
+            <button type="button" class="chip" id="btnModeYouth" aria-pressed="true"></button>
+            <button type="button" class="chip" id="btnModePro" aria-pressed="false"></button>
+          </div>
+          <label class="ctrl-select">
+            <span id="uiLangLabel"></span>
+            <select id="lang" aria-label="UI language">
+              <option value="he" selected>עברית</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnSample"></button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnClear"></button>
         </div>
       </header>
 
-      <div class="status-row" aria-live="polite" aria-atomic="true">
-        <div id="status" class="status" role="status"></div>
+      <div class="app-status-row">
+        <div id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></div>
       </div>
 
-      <nav class="tabs" aria-label="תצוגה במובייל">
-        <button id="tabInput" class="tab is-active" type="button">קלט</button>
-        <button id="tabOutput" class="tab" type="button">פלט</button>
+      <nav class="tabs" aria-label="Mobile workspace">
+        <button type="button" id="tabInput" class="tab is-active"></button>
+        <button type="button" id="tabOutput" class="tab"></button>
       </nav>
 
-      <section class="grid">
-        <!-- 1–3: Input flow -->
-        <section class="panel panel-input" id="panelInput">
-          <div class="panel-body">
-            <ol class="steps" id="stepsList" aria-label="תהליך עבודה">
-              <li class="step"><span class="step-num">1</span><span id="step1">הדבק דוח</span></li>
-              <li class="step"><span class="step-num">2</span><span id="step2">בחר הגדרות</span></li>
-              <li class="step"><span class="step-num">3</span><span id="step3">לחץ ניתוח</span></li>
-            </ol>
+      <!-- 2 · Workspace: Input | Output (LTR grid = lab layout) -->
+      <div class="workspace" dir="ltr">
+        <section class="ws-panel ws-input" id="panelInput">
+          <header class="ws-head">
+            <span class="ws-kicker" id="inputKicker"></span>
+            <h2 class="ws-title" id="inputSectionTitle"></h2>
+          </header>
 
-            <h2 class="section-heading" id="inputSectionTitle">קלט</h2>
-            <p class="section-hint" id="inputHint">טיפ: ככל שהדוח כולל טכנולוגיות ושגיאות, הניתוח מדויק יותר.</p>
+          <ol class="flow-steps" id="stepsList" aria-label="Flow">
+            <li><span class="flow-num">1</span><span id="step1"></span></li>
+            <li><span class="flow-num">2</span><span id="step2"></span></li>
+            <li><span class="flow-num">3</span><span id="step3"></span></li>
+          </ol>
 
-            <textarea
-              id="report"
-              class="textarea textarea-input"
-              aria-label="הדבק דוח"
-              placeholder=""
-            ></textarea>
+          <p class="ws-hint" id="inputHint"></p>
 
-            <div class="input-meta">
-              <span id="charCount" class="counter">0 תווים</span>
-              <span id="lenBadge" class="badge is-short">קצר</span>
+          <div class="input-stack">
+            <label for="report" class="field-label" id="reportLabel"></label>
+            <div class="guide-card" id="reportGuideBlock" role="note">
+              <div class="guide-title" id="reportGuideTitle"></div>
+              <ul class="guide-list">
+                <li id="guide1"></li>
+                <li id="guide2"></li>
+                <li id="guide3"></li>
+                <li id="guide4"></li>
+              </ul>
             </div>
-
-            <div class="settings-bar" role="group" aria-labelledby="settingsBarLabel">
-              <span class="settings-bar-label" id="settingsBarLabel">הגדרות</span>
-              <div class="settings-bar-row">
-                <label class="inline inline-setting">
-                  <span id="lblOutputLang">שפת פלט</span>
-                  <select id="outputLang" aria-labelledby="lblOutputLang">
-                    <option value="auto" selected>אוטומטי</option>
-                    <option value="he">עברית</option>
-                    <option value="en">English</option>
-                  </select>
-                </label>
-                <label class="inline inline-setting">
-                  <span id="lblOutputType">סוג פלט</span>
-                  <select id="outputType" aria-labelledby="lblOutputType">
-                    <option value="auto" selected>אוטומטי</option>
-                    <option value="instructions">הוראות ביצוע</option>
-                    <option value="summary">סיכום</option>
-                    <option value="client_report">דוח ללקוח</option>
-                    <option value="checklist">Checklist</option>
-                  </select>
-                </label>
-                <label class="inline inline-setting">
-                  <span id="lblTone">טון</span>
-                  <select id="tone" aria-labelledby="lblTone">
-                    <option value="auto" selected>אוטומטי</option>
-                    <option value="professional">מקצועי</option>
-                    <option value="sharp">חד</option>
-                    <option value="client">ללקוח</option>
-                    <option value="cursor">ל‑AI (Cursor)</option>
-                  </select>
-                </label>
-              </div>
+            <div class="editor-frame">
+              <textarea
+                id="report"
+                class="editor editor--data"
+                aria-labelledby="reportLabel"
+                aria-describedby="inputHint reportGuideBlock"
+                autocomplete="off"
+                spellcheck="true"
+                rows="16"
+                placeholder=""
+              ></textarea>
             </div>
+          </div>
 
-            <div class="cta-wrap">
-              <button id="btnAnalyze" class="btn btn-primary btn-cta" type="button">נתח דוח</button>
-            </div>
+          <div class="input-meta">
+            <span id="charCount" class="meta-text"></span>
+            <span id="lenBadge" class="tag tag-short"></span>
           </div>
         </section>
 
-        <!-- 4–5: Output -->
-        <section class="panel panel-output" id="panelOutput">
-          <div class="panel-body panel-body-output">
-            <h2 class="section-heading" id="outputSectionTitle">פלט שנוצר</h2>
+        <section class="ws-panel ws-output" id="panelOutput">
+          <header class="ws-head">
+            <span class="ws-kicker ws-kicker--violet" id="outputKicker"></span>
+            <h2 class="ws-title" id="outputSectionTitle"></h2>
+          </header>
 
-            <div class="output-insights" aria-live="polite">
-              <div class="pill pill-detected" id="pillDetected">
-                <span class="pill-key" id="pillDetectedKey">מצב מזוהה</span>
-                <span class="pill-val" id="pillDetectedVal">—</span>
-              </div>
-              <div class="pill pill-confidence" id="pillConfidence">
-                <span class="pill-key" id="pillConfidenceKey">רמת ביטחון</span>
-                <span class="pill-val" id="pillConfidenceVal">—</span>
-              </div>
+          <div class="metric-row" aria-live="polite">
+            <div class="metric" id="pillDetected">
+              <span class="metric-label" id="pillDetectedKey"></span>
+              <span class="metric-value" id="pillDetectedVal">—</span>
             </div>
-            <p class="template-line" id="templateLine" hidden>
-              <span id="templateLineKey">תבנית פלט</span>:
-              <strong id="templateLineTitle">—</strong>
-            </p>
-
-            <textarea id="output" class="textarea textarea-output" aria-label="תוצאה מוכנה" readonly></textarea>
-
-            <div class="output-actions">
-              <button id="btnCopy" class="btn btn-secondary" type="button">העתק</button>
-              <button id="btnDownload" class="btn btn-secondary" type="button">הורד .md</button>
+            <div class="metric metric--confidence" id="pillConfidence">
+              <span class="metric-label" id="pillConfidenceKey"></span>
+              <span class="metric-value" id="pillConfidenceVal">—</span>
             </div>
-
-            <details class="debug">
-              <summary id="debugSummary">פירוט ניתוח (debug)</summary>
-              <pre id="debug" class="debug-box"></pre>
-            </details>
           </div>
+          <p class="template-meta" id="templateLine" hidden>
+            <span id="templateLineKey"></span>:
+            <strong id="templateLineTitle">—</strong>
+          </p>
+
+          <div class="editor-frame editor-frame--readonly">
+            <textarea id="output" class="editor editor--output" readonly aria-label="Analysis output"></textarea>
+          </div>
+
+          <div class="secondary-actions">
+            <button type="button" class="btn btn-secondary btn-compact" id="btnCopy"></button>
+            <button type="button" class="btn btn-secondary btn-compact" id="btnDownload"></button>
+          </div>
+
+          <details class="debug-block">
+            <summary id="debugSummary"></summary>
+            <pre id="debug" class="debug-pre"></pre>
+          </details>
         </section>
+      </div>
+
+      <!-- 3 · Controls dock -->
+      <section class="controls-dock" aria-labelledby="settingsBarLabel">
+        <div class="controls-dock-inner">
+          <div class="settings-row">
+            <span class="settings-kicker" id="settingsBarLabel"></span>
+            <div class="settings-fields">
+              <label class="ctrl-select ctrl-select--grow">
+                <span id="lblOutputLang"></span>
+                <select id="outputLang" aria-labelledby="lblOutputLang">
+                  <option value="auto" selected>Auto</option>
+                  <option value="he">Hebrew</option>
+                  <option value="en">English</option>
+                </select>
+              </label>
+              <label class="ctrl-select ctrl-select--grow">
+                <span id="lblOutputType"></span>
+                <select id="outputType" aria-labelledby="lblOutputType">
+                  <option value="auto" selected>Auto</option>
+                  <option value="instructions">Instructions</option>
+                  <option value="summary">Summary</option>
+                  <option value="client_report">Client report</option>
+                  <option value="checklist">Checklist</option>
+                </select>
+              </label>
+              <label class="ctrl-select ctrl-select--grow">
+                <span id="lblTone"></span>
+                <select id="tone" aria-labelledby="lblTone">
+                  <option value="auto" selected>Auto</option>
+                  <option value="professional">Professional</option>
+                  <option value="sharp">Sharp</option>
+                  <option value="client">Client-ready</option>
+                  <option value="cursor">For AI (Cursor)</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="run-row">
+            <button type="button" class="btn btn-run" id="btnAnalyze"></button>
+          </div>
+        </div>
       </section>
 
-      <footer class="footer">
-        <div id="footerLegal">כלי מקומי בדפדפן בלבד — בלי שרת יישום, בלי API, בלי העלאה לרשת.</div>
-        <div class="footer-note" id="footerNote">
-          מודולים (ESM): אם פתיחה ישירה של <code>index.html</code> נחסמת, השתמש/י ב־<strong>Live Server</strong> / צפייה סטטית מקומית — רק לפיתוח, לא חלק מהמוצר.
-        </div>
+      <footer class="app-footer">
+        <p id="footerLegal"></p>
+        <p class="footer-meta" id="footerNote"></p>
       </footer>
     </main>
 

@@ -1,5 +1,5 @@
-import { decide, evaluateRules, pickTemplate } from "./rules.js";
-import { getTemplates } from "./templates.js";
+import { decide, evaluateRules, pickTemplate, normalize, assessReportUsability } from "./rules.js";
+import { getTemplates, getInvalidInputMarkdown } from "./templates.js";
 
 const $ = (id) => document.getElementById(id);
 const DEBUG = new URLSearchParams(window.location.search).has("debug");
@@ -33,13 +33,25 @@ const els = {
   lenBadge: $("lenBadge"),
   tabInput: $("tabInput"),
   tabOutput: $("tabOutput"),
-  heroTagline: $("heroTagline"),
+  productTagline: $("productTagline"),
+  systemStatusText: $("systemStatusText"),
+  expModeLabel: $("expModeLabel"),
+  btnModeYouth: $("btnModeYouth"),
+  btnModePro: $("btnModePro"),
+  inputKicker: $("inputKicker"),
+  outputKicker: $("outputKicker"),
   step1: $("step1"),
   step2: $("step2"),
   step3: $("step3"),
   inputSectionTitle: $("inputSectionTitle"),
   outputSectionTitle: $("outputSectionTitle"),
   inputHint: $("inputHint"),
+  reportLabel: $("reportLabel"),
+  reportGuideTitle: $("reportGuideTitle"),
+  guide1: $("guide1"),
+  guide2: $("guide2"),
+  guide3: $("guide3"),
+  guide4: $("guide4"),
   settingsBarLabel: $("settingsBarLabel"),
   lblOutputLang: $("lblOutputLang"),
   lblOutputType: $("lblOutputType"),
@@ -84,13 +96,25 @@ function assertRequiredEls() {
   requireEl("lenBadge", els.lenBadge);
   requireEl("tabInput", els.tabInput);
   requireEl("tabOutput", els.tabOutput);
-  requireEl("heroTagline", els.heroTagline);
+  requireEl("productTagline", els.productTagline);
+  requireEl("systemStatusText", els.systemStatusText);
+  requireEl("expModeLabel", els.expModeLabel);
+  requireEl("btnModeYouth", els.btnModeYouth);
+  requireEl("btnModePro", els.btnModePro);
+  requireEl("inputKicker", els.inputKicker);
+  requireEl("outputKicker", els.outputKicker);
   requireEl("step1", els.step1);
   requireEl("step2", els.step2);
   requireEl("step3", els.step3);
   requireEl("inputSectionTitle", els.inputSectionTitle);
   requireEl("outputSectionTitle", els.outputSectionTitle);
   requireEl("inputHint", els.inputHint);
+  requireEl("reportLabel", els.reportLabel);
+  requireEl("reportGuideTitle", els.reportGuideTitle);
+  requireEl("guide1", els.guide1);
+  requireEl("guide2", els.guide2);
+  requireEl("guide3", els.guide3);
+  requireEl("guide4", els.guide4);
   requireEl("settingsBarLabel", els.settingsBarLabel);
   requireEl("lblOutputLang", els.lblOutputLang);
   requireEl("lblOutputType", els.lblOutputType);
@@ -101,9 +125,11 @@ function assertRequiredEls() {
   requireEl("footerNote", els.footerNote);
 }
 
+const EXP_STORAGE_KEY = "MP_EXPERIENCE";
+
 const STRINGS = {
   he: {
-    analyze: "נתח דוח",
+    analyze: "הרץ ניתוח",
     analyzing: "מנתח…",
     sample: "טען דוגמה",
     clear: "נקה",
@@ -114,14 +140,22 @@ const STRINGS = {
     outputTab: "פלט",
     needReport: "נא להזין דוח לפני הניתוח",
     analyzeComplete: "הניתוח הושלם",
-    heroTagline: "הדבק דוח → קבל פלט מובנה מיד",
+    inputRejected: "הקלט לא זוהה כדוח תקף — לא נוצר דוח מקצועי (ראה הסבר בפלט)",
+    productTagline: "נתח. הבן. שפר.",
+    systemActive: "פעיל",
+    expModeLabel: "מצב",
+    modeYouth: "נוער",
+    modePro: "בוגרים",
+    inputKicker: "נתונים",
+    outputKicker: "פלט",
     step1: "הדבק דוח",
     step2: "בחר הגדרות",
-    step3: "לחץ ניתוח",
-    inputTitle: "קלט",
-    outputTitle: "פלט שנוצר",
-    inputHintTip: "טיפ: ככל שהדוח כולל טכנולוגיות ושגיאות, הניתוח מדויק יותר.",
-    settingsBar: "הגדרות",
+    step3: "הרץ ניתוח",
+    inputTitle: "קלט נתונים",
+    outputTitle: "פלט ניתוח",
+    inputHintTip:
+      "טיפ: ככל שיש בדוח סטאק, בעיות מפורטות (כרשימה) ומטרה ברורה — הניתוח והפלט יהיו מדויקים ורלוונטיים יותר.",
+    settingsBar: "הגדרות מערכת",
     uiLangLabel: "ממשק",
     lblOutputLang: "שפת פלט",
     lblOutputType: "סוג פלט",
@@ -133,8 +167,22 @@ const STRINGS = {
     confMid: "בינונית",
     confLow: "נמוכה",
     debugSummary: "פירוט ניתוח (debug)",
-    placeholderReport:
-      "הדבק כאן את דוח המצב (טקסט חופשי): סטאק, שגיאות, מטרה…",
+    reportLabel: "דוח מצב",
+    reportGuideTitle: "מה לכלול בדוח",
+    guide1: "מקטעים: Frontend / Backend / Deploy (או מטרה אחת ברורה)",
+    guide2: "טכנולוגיות: React, Node, DB, Vercel, JWT…",
+    guide3: "בעיות כרשימה עם מקף (-): שגיאות, 500, UI שבור, איטיות",
+    guide4: "הקשר: דמו ללקוח, מסירה, באג בייצור…",
+    placeholderReport: `הדבק כאן את דוח המצב…
+
+דוגמה למבנה:
+Frontend: React + Vite
+- רספונסיבי לא עקבי
+
+Backend: Express + MongoDB
+- 500 לפעמים ב-login
+
+מטרה: דמו ללקוח השבוע`,
     footerLegal: "כלי מקומי בדפדפן בלבד — בלי שרת יישום, בלי API, בלי העלאה לרשת.",
     footerNote:
       'מודולים (ESM): אם פתיחה ישירה של קובץ index.html נחסמת, השתמש/י ב-Live Server או צפייה סטטית מקומית — רק לפיתוח, לא חלק מהמוצר.',
@@ -157,7 +205,7 @@ const STRINGS = {
     long: "ארוך",
   },
   en: {
-    analyze: "Analyze report",
+    analyze: "Run Analysis",
     analyzing: "Analyzing…",
     sample: "Load sample",
     clear: "Clear",
@@ -168,14 +216,22 @@ const STRINGS = {
     outputTab: "Output",
     needReport: "Please enter a report first",
     analyzeComplete: "Analysis complete",
-    heroTagline: "Paste your report → Get structured output instantly",
+    inputRejected: "Input is not a valid report — no professional brief was generated (see output)",
+    productTagline: "Analyze. Understand. Improve.",
+    systemActive: "Active",
+    expModeLabel: "Mode",
+    modeYouth: "Youth",
+    modePro: "Pro",
+    inputKicker: "Data",
+    outputKicker: "Output",
     step1: "Paste your report",
     step2: "Choose settings",
-    step3: "Click Analyze",
-    inputTitle: "Input",
-    outputTitle: "Generated output",
-    inputHintTip: "Tip: include stack, errors, and goals — the analysis gets sharper.",
-    settingsBar: "Settings",
+    step3: "Run analysis",
+    inputTitle: "Data Input",
+    outputTitle: "Analysis Output",
+    inputHintTip:
+      "Tip: the more you include stack, bullet-point issues, and a clear goal, the sharper and more relevant the output.",
+    settingsBar: "System settings",
     uiLangLabel: "UI",
     lblOutputLang: "Output language",
     lblOutputType: "Output type",
@@ -187,7 +243,22 @@ const STRINGS = {
     confMid: "Medium",
     confLow: "Low",
     debugSummary: "Analysis details (debug)",
-    placeholderReport: "Paste your report here…",
+    reportLabel: "Status report",
+    reportGuideTitle: "What to include",
+    guide1: "Sections: Frontend / Backend / Deploy (or one clear goal)",
+    guide2: "Tech names: React, Node, DB, hosting, auth…",
+    guide3: "Issues as bullets (-): errors, 500s, broken UI, slowness",
+    guide4: "Context: client demo, release, production bug…",
+    placeholderReport: `Paste your status report here…
+
+Example shape:
+Frontend: React + Vite
+- inconsistent responsive layout
+
+Backend: Express + MongoDB
+- intermittent 500 on login
+
+Goal: client demo this week`,
     footerLegal: "Runs locally in your browser only — no app server, no API, no upload.",
     footerNote:
       "ES modules: if opening index.html directly is blocked, use Live Server or any local static preview — dev tooling only, not part of the product.",
@@ -219,6 +290,7 @@ function detectedModeLabel(inputType, lang) {
       ui_audit: "ממשק / UX",
       status_report: "סטטוס / מסירה",
       free_text: "כללי / לא מסווג",
+      invalid_input: "קלט לא תקף",
     },
     en: {
       qa: "Checklist / QA",
@@ -226,6 +298,7 @@ function detectedModeLabel(inputType, lang) {
       ui_audit: "UI / UX",
       status_report: "Status / delivery",
       free_text: "General / unclassified",
+      invalid_input: "Invalid input",
     },
   };
   const row = map[lang] || map.he;
@@ -299,12 +372,34 @@ function toSummaryMarkdown(markdown) {
 
 function computeResponse(reportText, lang, tone) {
   const analysis = evaluateRules(reportText);
+  const norm = normalize(reportText);
+  const quality = assessReportUsability(reportText, norm, analysis);
+
+  const effectiveOutputLang = resolveOutputLang(els.outputLang.value, analysis.facts, lang);
+
+  if (quality.level === "invalid") {
+    const markdown = getInvalidInputMarkdown(effectiveOutputLang, quality.code);
+    const baseDecision = decide(analysis, "general");
+    return {
+      markdown,
+      templateKey: "invalid_input",
+      confidence: 0,
+      analysis,
+      decision: { ...baseDecision, inputType: "invalid_input" },
+      tone: "professional",
+      outputLang: effectiveOutputLang,
+      outputType: "summary",
+      templateTitle: effectiveOutputLang === "en" ? "Not analyzed" : "לא נותח",
+      quality,
+      isRejectedInput: true,
+    };
+  }
+
   const { templateKey, confidence } = pickTemplate(analysis.scores, analysis.facts, analysis.matchedRules);
   const decision = decide(analysis, templateKey);
 
   const effectiveTone = tone === "auto" ? decision.autoTone : tone;
 
-  const effectiveOutputLang = resolveOutputLang(els.outputLang.value, analysis.facts, lang);
   const effectiveOutputType = resolveOutputType(els.outputType.value, decision);
 
   const templates = getTemplates(effectiveOutputLang);
@@ -343,6 +438,8 @@ function computeResponse(reportText, lang, tone) {
     outputLang: effectiveOutputLang,
     outputType: effectiveOutputType,
     templateTitle: template.title,
+    quality,
+    isRejectedInput: false,
   };
 }
 
@@ -503,7 +600,11 @@ async function typeOutput(text) {
 
 function setActiveTab(which) {
   const isMobile = window.matchMedia("(max-width: 720px)").matches;
-  if (!isMobile) return;
+  if (!isMobile) {
+    els.panelInput.classList.remove("is-hidden");
+    els.panelOutput.classList.remove("is-hidden");
+    return;
+  }
   const inputActive = which === "input";
 
   els.tabInput.classList.toggle("is-active", inputActive);
@@ -521,9 +622,35 @@ function updateCounts() {
   if (n > 1200) key = "long";
   else if (n > 400) key = "medium";
 
-  els.lenBadge.classList.remove("is-short", "is-medium", "is-long");
-  els.lenBadge.classList.add(key === "short" ? "is-short" : key === "medium" ? "is-medium" : "is-long");
+  els.lenBadge.classList.remove("tag-short", "tag-medium", "tag-long");
+  els.lenBadge.classList.add(key === "short" ? "tag-short" : key === "medium" ? "tag-medium" : "tag-long");
   els.lenBadge.textContent = key === "short" ? s.short : key === "medium" ? s.medium : s.long;
+}
+
+function readExperienceMode() {
+  try {
+    const v = localStorage.getItem(EXP_STORAGE_KEY);
+    if (v === "pro" || v === "youth") return v;
+  } catch {
+    /* ignore */
+  }
+  return "youth";
+}
+
+function applyExperienceMode(mode) {
+  const m = mode === "pro" ? "pro" : "youth";
+  document.body.classList.remove("mode-youth", "mode-pro");
+  document.body.classList.add(m === "pro" ? "mode-pro" : "mode-youth");
+  try {
+    localStorage.setItem(EXP_STORAGE_KEY, m);
+  } catch {
+    /* ignore */
+  }
+  const youth = m === "youth";
+  els.btnModeYouth.classList.toggle("is-active", youth);
+  els.btnModePro.classList.toggle("is-active", !youth);
+  els.btnModeYouth.setAttribute("aria-pressed", youth ? "true" : "false");
+  els.btnModePro.setAttribute("aria-pressed", youth ? "false" : "true");
 }
 
 function applyLanguageUI() {
@@ -533,13 +660,25 @@ function applyLanguageUI() {
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === "en" ? "ltr" : "rtl";
 
-  els.heroTagline.textContent = s.heroTagline;
+  els.productTagline.textContent = s.productTagline;
+  els.systemStatusText.textContent = s.systemActive;
+  els.expModeLabel.textContent = s.expModeLabel;
+  els.btnModeYouth.textContent = s.modeYouth;
+  els.btnModePro.textContent = s.modePro;
+  els.inputKicker.textContent = s.inputKicker;
+  els.outputKicker.textContent = s.outputKicker;
   els.step1.textContent = s.step1;
   els.step2.textContent = s.step2;
   els.step3.textContent = s.step3;
   els.inputSectionTitle.textContent = s.inputTitle;
   els.outputSectionTitle.textContent = s.outputTitle;
   els.inputHint.textContent = s.inputHintTip;
+  els.reportLabel.textContent = s.reportLabel;
+  els.reportGuideTitle.textContent = s.reportGuideTitle;
+  els.guide1.textContent = s.guide1;
+  els.guide2.textContent = s.guide2;
+  els.guide3.textContent = s.guide3;
+  els.guide4.textContent = s.guide4;
   els.settingsBarLabel.textContent = s.settingsBar;
   els.uiLangLabel.textContent = s.uiLangLabel;
   els.lblOutputLang.textContent = s.lblOutputLang;
@@ -645,7 +784,11 @@ async function analyze() {
       console.log("analyze_result", res);
     }
 
-    setOutputInsights(res.decision?.inputType, res.templateTitle, res.confidence);
+    setOutputInsights(
+      res.decision?.inputType,
+      res.isRejectedInput ? null : res.templateTitle,
+      res.confidence,
+    );
     els.debug.textContent = toPrettyJson({
       templateKey: res.templateKey,
       confidence: res.confidence,
@@ -657,15 +800,21 @@ async function analyze() {
       signals: res.analysis.signals,
       scores: res.analysis.scores,
       facts: res.analysis.facts,
+      inputQuality: res.quality,
+      rejectedInput: Boolean(res.isRejectedInput),
     });
 
-    // Success state + subtle flash
-    setPanelsState({ input: "success", output: "success" });
-    els.panelOutput.classList.remove("flash");
-    // Force reflow for repeated flashes
-    void els.panelOutput.offsetWidth;
-    els.panelOutput.classList.add("flash");
-    setStatus(s.analyzeComplete, "success");
+    if (res.isRejectedInput) {
+      setPanelsState({ input: "error", output: "normal" });
+      els.panelOutput.classList.remove("flash");
+      setStatus(s.inputRejected, "error");
+    } else {
+      setPanelsState({ input: "success", output: "success" });
+      els.panelOutput.classList.remove("flash");
+      void els.panelOutput.offsetWidth;
+      els.panelOutput.classList.add("flash");
+      setStatus(s.analyzeComplete, "success");
+    }
   } catch (err) {
     const msg = err && err.message ? err.message : String(err);
     console.error("analyze_failed", err);
@@ -756,6 +905,9 @@ els.tabInput.addEventListener("click", () => setActiveTab("input"));
 els.tabOutput.addEventListener("click", () => setActiveTab("output"));
 window.addEventListener("resize", () => setActiveTab("input"));
 
+els.btnModeYouth.addEventListener("click", () => applyExperienceMode("youth"));
+els.btnModePro.addEventListener("click", () => applyExperienceMode("pro"));
+
 // Initial state
 try {
   assertRequiredEls();
@@ -768,6 +920,7 @@ try {
     els.status.classList.add("is-error");
   }
 }
+applyExperienceMode(readExperienceMode());
 applyLanguageUI();
 setOutputInsights(null, null, null);
 updateCounts();

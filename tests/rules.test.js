@@ -6,6 +6,8 @@ import {
   evaluateRules,
   pickTemplate,
   decide,
+  assessInputQuality,
+  assessReportUsability,
 } from "../rules.js";
 
 test("normalize strips RLM/LRM and lowercases", () => {
@@ -84,4 +86,36 @@ test("very short vague input stays general", () => {
   const a = evaluateRules("help");
   const r = pickTemplate(a.scores, a.facts, a.matchedRules);
   assert.equal(r.templateKey, "general");
+});
+
+test("assessInputQuality rejects too-short paste", () => {
+  const q = assessInputQuality("short", normalize("short"));
+  assert.equal(q.level, "invalid");
+  assert.equal(q.code, "too_short");
+});
+
+test("assessReportUsability rejects prose with no analyzable signals", () => {
+  const raw = "hello there how are you doing today hope fine thanks";
+  const n = normalize(raw);
+  const a = evaluateRules(raw);
+  const u = assessReportUsability(raw, n, a);
+  assert.equal(u.level, "invalid");
+  assert.equal(u.code, "no_clear_signal");
+});
+
+test("assessReportUsability accepts stack-like report", () => {
+  const raw = "React Vite app. errors on login and 500 from express api.";
+  const n = normalize(raw);
+  const a = evaluateRules(raw);
+  const u = assessReportUsability(raw, n, a);
+  assert.equal(u.level, "ok");
+});
+
+test("assessReportUsability allows very short text when rules already matched", () => {
+  const raw = "react 500 jwt";
+  const n = normalize(raw);
+  const a = evaluateRules(raw);
+  assert.ok(a.matchedRules.length > 0);
+  const u = assessReportUsability(raw, n, a);
+  assert.equal(u.level, "ok");
 });

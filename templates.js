@@ -709,6 +709,70 @@ function renderPrioritiesHE(decision) {
   return parts.length ? parts.join("\n\n") : "—";
 }
 
+const INVALID_COPY = {
+  he: {
+    header: "## הקלט לא נחשב כדוח מצב תקף",
+    lead:
+      "הכלי עובד לפי **זיהוי דטרמיניסטי**: מילות מפתח, טכנולוגיות, ושורות בעיה בטקסט. מה שהדבקת **לא נראה כמו דוח אתר/מוצר** שניתן לבסס עליו תוצאה אמינה — לכן **לא נוצר דוח מקצועי** (ולא “מילאנו מילים סתם”).",
+    why: "### למה זה נחסם",
+    expect: "### מה כן להדביק (דוגמה למבנה)",
+    expectBullets: `- Frontend / Backend / Deploy (או מטרה ברורה)\n- טכנולוגיות: React, Node, DB, Vercel…\n- בעיות כרשימה: שגיאות, 500, UI שבור, איטיות`,
+    note:
+      "### חשוב להבין\nהמערכת **לא קוראת כמו אדם** ולא מבינה שיח חופשי עמוק. ככל שיש בדוח **יותר אותות קונקרטיים** — הניתוח והפלט יהיו קשורים יותר למה שכתבת.",
+    reasons: {
+      too_short: "הטקסט קצר מדי — אין מספיק הקשר כדי לסווג אותו כדוח.",
+      too_few_letters: "כמעט אין אותיות (עברית/אנגלית) — נראה כמו רעש ולא כמו דוח.",
+      noise: "יותר מדי תווים מיוחדים או סימנים בלי תוכן מילולי ברור.",
+      repetitive: "חזרות חזקות על אותו תו או דפוס — לא נראה כמו דוח אמיתי.",
+      too_few_words: "מעט מדי מילים; דוח מצב בדרך כלל כולל כמה משפטים או רשימות.",
+      repetitive_words: "חזרות על אותן מילים בלי תוכן מהותי.",
+      no_clear_signal:
+        "לא זוהו טכנולוגיות, שורות בעיה או מילות מפתח שהמנוע מזהה — אי אפשר לייצר תוכנית רלוונטית לטקסט הזה.",
+      default: "הקלט לא עומד בסף המינימלי לדוח שניתן לנתח.",
+    },
+  },
+  en: {
+    header: "## This input is not a valid status report",
+    lead:
+      "This tool uses **deterministic matching** (keywords, stack hints, issue lines). What you pasted **does not read like a real site/product report** we can trust — so **no professional brief was generated** (we are not fabricating a report).",
+    why: "### Why it was blocked",
+    expect: "### What to paste (structure hint)",
+    expectBullets: `- Sections like Frontend / Backend / Deploy (or a clear goal)\n- Tech names: React, Node, DB, hosting…\n- Issues as bullets: errors, 500s, broken UI, slowness`,
+    note:
+      "### Please note\nThe analyzer **does not read like a human** and does not deeply “understand” free chat. More **concrete signals** in your text → more relevant output.",
+    reasons: {
+      too_short: "The text is too short — not enough context to treat it as a report.",
+      too_few_letters: "Almost no letters (Latin/Hebrew) — looks like noise, not a report.",
+      noise: "Too many symbols / special characters without clear wording.",
+      repetitive: "Heavy repetition of the same character or pattern — unlikely to be a real report.",
+      too_few_words: "Too few words; status reports usually include sentences or lists.",
+      repetitive_words: "Repeated words without meaningful substance.",
+      no_clear_signal:
+        "No technologies, issue lines, or recognizable keywords were found — we cannot produce a relevant plan from this text.",
+      default: "The input does not meet the minimum bar for analyzable report text.",
+    },
+  },
+};
+
+/** Markdown shown when input fails quality / signal checks (HE/EN). */
+export function getInvalidInputMarkdown(lang, code) {
+  const pack = lang === "en" ? INVALID_COPY.en : INVALID_COPY.he;
+  const reason = pack.reasons[code] || pack.reasons.default;
+  return [
+    pack.header,
+    "",
+    pack.lead,
+    "",
+    pack.why,
+    reason,
+    "",
+    pack.expect,
+    pack.expectBullets,
+    "",
+    pack.note,
+  ].join("\n");
+}
+
 export function getTemplates(lang) {
   return lang === "en" ? EN : HE;
 }

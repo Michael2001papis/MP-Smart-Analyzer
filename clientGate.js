@@ -1,12 +1,12 @@
 /** Client access gate — static site; password is visible in source (UX layer only). */
 
 export const GATE_STORAGE_KEY = "MP_CLIENT_GATE_V1";
-export const IDLE_MS = 10 * 24 * 60 * 60 * 1000;
+export const IDLE_MS = 10 * 60 * 1000;
 
 const CLIENT_PASSWORD = "MP321321";
 
 const ACTIVITY_SAVE_THROTTLE_MS = 60 * 1000;
-const STALE_CHECK_INTERVAL_MS = 10 * 60 * 1000;
+const STALE_CHECK_INTERVAL_MS = 30 * 1000;
 
 let activityTimer = null;
 let lastSavedAt = 0;

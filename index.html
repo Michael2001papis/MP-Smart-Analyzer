@@ -13,7 +13,7 @@
     <script>
       (function () {
         var K = "MP_CLIENT_GATE_V1";
-        var IDLE = 864e6;
+        var IDLE = 10 * 60 * 1000;
         try {
           var raw = localStorage.getItem(K);
           if (!raw) return;

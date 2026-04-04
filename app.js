@@ -17,8 +17,14 @@ const els = {
   btnDownload: $("btnDownload"),
   btnClear: $("btnClear"),
   btnSample: $("btnSample"),
-  pillTemplate: $("pillTemplate"),
+  pillDetectedKey: $("pillDetectedKey"),
+  pillDetectedVal: $("pillDetectedVal"),
   pillConfidence: $("pillConfidence"),
+  pillConfidenceKey: $("pillConfidenceKey"),
+  pillConfidenceVal: $("pillConfidenceVal"),
+  templateLine: $("templateLine"),
+  templateLineKey: $("templateLineKey"),
+  templateLineTitle: $("templateLineTitle"),
   status: $("status"),
   toast: $("toast"),
   panelInput: $("panelInput"),
@@ -27,6 +33,21 @@ const els = {
   lenBadge: $("lenBadge"),
   tabInput: $("tabInput"),
   tabOutput: $("tabOutput"),
+  heroTagline: $("heroTagline"),
+  step1: $("step1"),
+  step2: $("step2"),
+  step3: $("step3"),
+  inputSectionTitle: $("inputSectionTitle"),
+  outputSectionTitle: $("outputSectionTitle"),
+  inputHint: $("inputHint"),
+  settingsBarLabel: $("settingsBarLabel"),
+  lblOutputLang: $("lblOutputLang"),
+  lblOutputType: $("lblOutputType"),
+  lblTone: $("lblTone"),
+  uiLangLabel: $("uiLangLabel"),
+  debugSummary: $("debugSummary"),
+  footerLegal: $("footerLegal"),
+  footerNote: $("footerNote"),
 };
 
 function requireEl(name, el) {
@@ -47,8 +68,14 @@ function assertRequiredEls() {
   requireEl("btnDownload", els.btnDownload);
   requireEl("btnClear", els.btnClear);
   requireEl("btnSample", els.btnSample);
-  requireEl("pillTemplate", els.pillTemplate);
+  requireEl("pillDetectedKey", els.pillDetectedKey);
+  requireEl("pillDetectedVal", els.pillDetectedVal);
   requireEl("pillConfidence", els.pillConfidence);
+  requireEl("pillConfidenceKey", els.pillConfidenceKey);
+  requireEl("pillConfidenceVal", els.pillConfidenceVal);
+  requireEl("templateLine", els.templateLine);
+  requireEl("templateLineKey", els.templateLineKey);
+  requireEl("templateLineTitle", els.templateLineTitle);
   requireEl("status", els.status);
   requireEl("toast", els.toast);
   requireEl("panelInput", els.panelInput);
@@ -57,11 +84,26 @@ function assertRequiredEls() {
   requireEl("lenBadge", els.lenBadge);
   requireEl("tabInput", els.tabInput);
   requireEl("tabOutput", els.tabOutput);
+  requireEl("heroTagline", els.heroTagline);
+  requireEl("step1", els.step1);
+  requireEl("step2", els.step2);
+  requireEl("step3", els.step3);
+  requireEl("inputSectionTitle", els.inputSectionTitle);
+  requireEl("outputSectionTitle", els.outputSectionTitle);
+  requireEl("inputHint", els.inputHint);
+  requireEl("settingsBarLabel", els.settingsBarLabel);
+  requireEl("lblOutputLang", els.lblOutputLang);
+  requireEl("lblOutputType", els.lblOutputType);
+  requireEl("lblTone", els.lblTone);
+  requireEl("uiLangLabel", els.uiLangLabel);
+  requireEl("debugSummary", els.debugSummary);
+  requireEl("footerLegal", els.footerLegal);
+  requireEl("footerNote", els.footerNote);
 }
 
 const STRINGS = {
   he: {
-    analyze: "נתח",
+    analyze: "נתח דוח",
     analyzing: "מנתח…",
     sample: "טען דוגמה",
     clear: "נקה",
@@ -70,10 +112,32 @@ const STRINGS = {
     download: "הורד .md",
     inputTab: "קלט",
     outputTab: "פלט",
-    needReport: "יש להזין דוח לפני ניתוח",
-    pasteFirst: "קודם הדבק דוח מצב.",
-    templatePrefix: "Template: ",
-    confidencePrefix: "Confidence: ",
+    needReport: "נא להזין דוח לפני הניתוח",
+    analyzeComplete: "הניתוח הושלם",
+    heroTagline: "הדבק דוח → קבל פלט מובנה מיד",
+    step1: "הדבק דוח",
+    step2: "בחר הגדרות",
+    step3: "לחץ ניתוח",
+    inputTitle: "קלט",
+    outputTitle: "פלט שנוצר",
+    inputHintTip: "טיפ: ככל שהדוח כולל טכנולוגיות ושגיאות, הניתוח מדויק יותר.",
+    settingsBar: "הגדרות",
+    uiLangLabel: "ממשק",
+    lblOutputLang: "שפת פלט",
+    lblOutputType: "סוג פלט",
+    lblTone: "טון",
+    detectedKey: "מצב מזוהה",
+    confidenceKey: "רמת ביטחון",
+    templateLineKey: "תבנית פלט",
+    confHigh: "גבוהה",
+    confMid: "בינונית",
+    confLow: "נמוכה",
+    debugSummary: "פירוט ניתוח (debug)",
+    placeholderReport:
+      "הדבק כאן את דוח המצב (טקסט חופשי): סטאק, שגיאות, מטרה…",
+    footerLegal: "כלי מקומי בדפדפן בלבד — בלי שרת יישום, בלי API, בלי העלאה לרשת.",
+    footerNote:
+      'מודולים (ESM): אם פתיחה ישירה של קובץ index.html נחסמת, השתמש/י ב-Live Server או צפייה סטטית מקומית — רק לפיתוח, לא חלק מהמוצר.',
     toneAuto: "אוטומטי",
     toneProfessional: "מקצועי",
     toneSharp: "חד",
@@ -93,7 +157,7 @@ const STRINGS = {
     long: "ארוך",
   },
   en: {
-    analyze: "Analyze",
+    analyze: "Analyze report",
     analyzing: "Analyzing…",
     sample: "Load sample",
     clear: "Clear",
@@ -102,10 +166,31 @@ const STRINGS = {
     download: "Download .md",
     inputTab: "Input",
     outputTab: "Output",
-    needReport: "Please paste a report before analyzing",
-    pasteFirst: "Paste a report first.",
-    templatePrefix: "Template: ",
-    confidencePrefix: "Confidence: ",
+    needReport: "Please enter a report first",
+    analyzeComplete: "Analysis complete",
+    heroTagline: "Paste your report → Get structured output instantly",
+    step1: "Paste your report",
+    step2: "Choose settings",
+    step3: "Click Analyze",
+    inputTitle: "Input",
+    outputTitle: "Generated output",
+    inputHintTip: "Tip: include stack, errors, and goals — the analysis gets sharper.",
+    settingsBar: "Settings",
+    uiLangLabel: "UI",
+    lblOutputLang: "Output language",
+    lblOutputType: "Output type",
+    lblTone: "Tone",
+    detectedKey: "Detected mode",
+    confidenceKey: "Confidence",
+    templateLineKey: "Output template",
+    confHigh: "High",
+    confMid: "Medium",
+    confLow: "Low",
+    debugSummary: "Analysis details (debug)",
+    placeholderReport: "Paste your report here…",
+    footerLegal: "Runs locally in your browser only — no app server, no API, no upload.",
+    footerNote:
+      "ES modules: if opening index.html directly is blocked, use Live Server or any local static preview — dev tooling only, not part of the product.",
     toneAuto: "Auto",
     toneProfessional: "Professional",
     toneSharp: "Sharp",
@@ -125,6 +210,27 @@ const STRINGS = {
     long: "Long",
   },
 };
+
+function detectedModeLabel(inputType, lang) {
+  const map = {
+    he: {
+      qa: "צ׳ק־ליסט / QA",
+      bug_report: "באגים / יציבות",
+      ui_audit: "ממשק / UX",
+      status_report: "סטטוס / מסירה",
+      free_text: "כללי / לא מסווג",
+    },
+    en: {
+      qa: "Checklist / QA",
+      bug_report: "Bugs / stability",
+      ui_audit: "UI / UX",
+      status_report: "Status / delivery",
+      free_text: "General / unclassified",
+    },
+  };
+  const row = map[lang] || map.he;
+  return row[inputType] || row.free_text;
+}
 
 function sampleReport() {
   return `
@@ -173,6 +279,8 @@ function toSummaryMarkdown(markdown) {
     "## Project Overview",
     "## What was detected (from the report)",
     "## Priorities (Decision Engine)",
+    "## Goal",
+    "## Main Goal",
     "## Expected Result",
     "## Next Steps",
     "## Meta",
@@ -191,7 +299,7 @@ function toSummaryMarkdown(markdown) {
 
 function computeResponse(reportText, lang, tone) {
   const analysis = evaluateRules(reportText);
-  const { templateKey, confidence } = pickTemplate(analysis.scores);
+  const { templateKey, confidence } = pickTemplate(analysis.scores, analysis.facts, analysis.matchedRules);
   const decision = decide(analysis, templateKey);
 
   const effectiveTone = tone === "auto" ? decision.autoTone : tone;
@@ -207,9 +315,11 @@ function computeResponse(reportText, lang, tone) {
         ? "final_qa"
         : templateKey;
 
-  const template = templates?.[chosenKey] || templates?.[templateKey] || templates?.general;
-  if (!template) {
-    throw new Error(`No template found for lang=${String(effectiveOutputLang)} key=${String(chosenKey)}`);
+  const template = templates[chosenKey];
+  if (!template?.render) {
+    throw new Error(
+      `Missing template for lang=${String(effectiveOutputLang)} key=${String(chosenKey)}. Run npm test to verify HE/EN parity.`,
+    );
   }
   const markdown = template.render({
     tone: effectiveTone,
@@ -236,16 +346,37 @@ function computeResponse(reportText, lang, tone) {
   };
 }
 
-function setPills(templateKey, templateTitle, confidence) {
+function setOutputInsights(inputType, templateTitle, confidence) {
   const s = STRINGS[els.lang.value] || STRINGS.he;
-  els.pillTemplate.textContent = `${s.templatePrefix}${templateTitle || templateKey || "—"}`;
-  els.pillConfidence.textContent = `${s.confidencePrefix}${typeof confidence === "number" ? confidence : "—"}`;
+  const lang = els.lang.value;
+
+  els.pillDetectedKey.textContent = s.detectedKey;
+  els.pillConfidenceKey.textContent = s.confidenceKey;
+  els.templateLineKey.textContent = s.templateLineKey;
+
+  if (inputType) {
+    els.pillDetectedVal.textContent = detectedModeLabel(inputType, lang);
+  } else {
+    els.pillDetectedVal.textContent = "—";
+  }
 
   els.pillConfidence.classList.remove("is-high", "is-mid", "is-low");
   if (typeof confidence === "number") {
+    const tierLabel = confidence >= 0.75 ? s.confHigh : confidence >= 0.5 ? s.confMid : s.confLow;
+    els.pillConfidenceVal.textContent = `${tierLabel} · ${Math.round(confidence * 100)}%`;
     if (confidence >= 0.75) els.pillConfidence.classList.add("is-high");
     else if (confidence >= 0.5) els.pillConfidence.classList.add("is-mid");
     else els.pillConfidence.classList.add("is-low");
+  } else {
+    els.pillConfidenceVal.textContent = "—";
+  }
+
+  if (templateTitle) {
+    els.templateLineTitle.textContent = templateTitle;
+    els.templateLine.hidden = false;
+  } else {
+    els.templateLineTitle.textContent = "—";
+    els.templateLine.hidden = true;
   }
 }
 
@@ -399,9 +530,29 @@ function applyLanguageUI() {
   const lang = els.lang.value;
   const s = STRINGS[lang] || STRINGS.he;
 
-  // Page direction
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === "en" ? "ltr" : "rtl";
+
+  els.heroTagline.textContent = s.heroTagline;
+  els.step1.textContent = s.step1;
+  els.step2.textContent = s.step2;
+  els.step3.textContent = s.step3;
+  els.inputSectionTitle.textContent = s.inputTitle;
+  els.outputSectionTitle.textContent = s.outputTitle;
+  els.inputHint.textContent = s.inputHintTip;
+  els.settingsBarLabel.textContent = s.settingsBar;
+  els.uiLangLabel.textContent = s.uiLangLabel;
+  els.lblOutputLang.textContent = s.lblOutputLang;
+  els.lblOutputType.textContent = s.lblOutputType;
+  els.lblTone.textContent = s.lblTone;
+  els.debugSummary.textContent = s.debugSummary;
+  els.report.placeholder = s.placeholderReport;
+  els.footerLegal.textContent = s.footerLegal;
+  els.footerNote.textContent = s.footerNote;
+
+  els.pillDetectedKey.textContent = s.detectedKey;
+  els.pillConfidenceKey.textContent = s.confidenceKey;
+  els.templateLineKey.textContent = s.templateLineKey;
 
   els.btnAnalyze.textContent = s.analyze;
   els.btnSample.textContent = s.sample;
@@ -411,7 +562,6 @@ function applyLanguageUI() {
   els.tabInput.textContent = s.inputTab;
   els.tabOutput.textContent = s.outputTab;
 
-  // Tone labels (so Auto is readable in EN too)
   if (els.tone?.options?.length) {
     const map = {
       auto: s.toneAuto,
@@ -446,7 +596,6 @@ function applyLanguageUI() {
   }
 
   updateCounts();
-  setPills("—", "—", "—");
   setButtonsState();
 }
 
@@ -457,8 +606,8 @@ async function analyze() {
   const s = STRINGS[lang] || STRINGS.he;
 
   if (!reportText.trim()) {
-    els.output.value = s.pasteFirst;
-    setPills("—", "—", "—");
+    els.output.value = "";
+    setOutputInsights(null, null, null);
     els.debug.textContent = "";
     setPanelsState({ input: "error", output: "normal" });
     setStatus(s.needReport, "error");
@@ -471,7 +620,7 @@ async function analyze() {
   els.btnAnalyze.classList.add("btn-loading");
   els.btnAnalyze.disabled = true;
   els.btnAnalyze.textContent = s.analyzing;
-  setStatus("", "info");
+  setStatus(s.analyzing, "info");
   setPanelsState({ input: "normal", output: "normal" });
   // Cancel any previous output animation.
   outputAnimToken++;
@@ -496,7 +645,7 @@ async function analyze() {
       console.log("analyze_result", res);
     }
 
-    setPills(res.templateKey, res.templateTitle, res.confidence);
+    setOutputInsights(res.decision?.inputType, res.templateTitle, res.confidence);
     els.debug.textContent = toPrettyJson({
       templateKey: res.templateKey,
       confidence: res.confidence,
@@ -516,7 +665,7 @@ async function analyze() {
     // Force reflow for repeated flashes
     void els.panelOutput.offsetWidth;
     els.panelOutput.classList.add("flash");
-    setStatus(lang === "en" ? "Analysis ready." : "הניתוח מוכן.", "success");
+    setStatus(s.analyzeComplete, "success");
   } catch (err) {
     const msg = err && err.message ? err.message : String(err);
     console.error("analyze_failed", err);
@@ -526,7 +675,7 @@ async function analyze() {
     els.debug.textContent = DEBUG
       ? (err && err.stack ? String(err.stack) : msg)
       : toPrettyJson({ error: msg });
-    setPills("—", "—", "—");
+    setOutputInsights(null, null, null);
     setPanelsState({ input: "normal", output: "error" });
     setStatus(lang === "en" ? "Analysis failed. Check debug/console." : "הניתוח נכשל. בדוק debug/console.", "error");
     setButtonsState();
@@ -544,7 +693,7 @@ els.btnClear.addEventListener("click", () => {
   els.report.value = "";
   els.output.value = "";
   els.debug.textContent = "";
-  setPills("—", "—", "—");
+  setOutputInsights(null, null, null);
   setPanelsState({ input: "normal", output: "normal" });
   setStatus("", "info");
   updateCounts();
@@ -619,8 +768,8 @@ try {
     els.status.classList.add("is-error");
   }
 }
-setPills("—", "—", "—");
 applyLanguageUI();
+setOutputInsights(null, null, null);
 updateCounts();
 setButtonsState();
 setActiveTab("input");

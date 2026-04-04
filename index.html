@@ -8,17 +8,26 @@
   </head>
   <body>
     <main class="container">
-      <header class="header">
-        <div class="brand">
-          <div class="logo">MP</div>
-          <div>
-            <div class="title">MP Smart Analyzer</div>
-            <div class="subtitle">דוח מצב → ניתוח → תשובה מקצועית מוכנה</div>
+      <header class="hero" aria-label="מותג">
+        <div class="hero-main">
+          <div class="brand">
+            <div class="logo" aria-hidden="true">MP</div>
+            <div>
+              <h1 class="title" id="heroTitle">MP Smart Analyzer</h1>
+              <p class="hero-tagline" id="heroTagline">הדבק דוח → קבל פלט מובנה מיד</p>
+            </div>
           </div>
-        </div>
-        <div class="actions">
-          <button id="btnSample" class="btn btn-secondary" type="button">טען דוגמה</button>
-          <button id="btnClear" class="btn btn-secondary" type="button">נקה</button>
+          <div class="hero-tools">
+            <label class="inline inline-compact">
+              <span id="uiLangLabel">ממשק</span>
+              <select id="lang" aria-label="שפת ממשק">
+                <option value="he" selected>עברית</option>
+                <option value="en">English</option>
+              </select>
+            </label>
+            <button id="btnSample" class="btn btn-secondary btn-sm" type="button">טען דוגמה</button>
+            <button id="btnClear" class="btn btn-secondary btn-sm" type="button">נקה</button>
+          </div>
         </div>
       </header>
 
@@ -32,93 +41,110 @@
       </nav>
 
       <section class="grid">
-        <section class="panel" id="panelInput">
-          <div class="panel-header">
-            <div class="panel-title">קלט (דוח מצב)</div>
-            <div class="panel-meta">
-              <label class="inline">
-                <span>שפה</span>
-                <select id="lang">
-                  <option value="he" selected>עברית</option>
-                  <option value="en">English</option>
-                </select>
-              </label>
-              <label class="inline">
-                <span>שפת פלט</span>
-                <select id="outputLang">
-                  <option value="auto" selected>אוטומטי</option>
-                  <option value="he">עברית</option>
-                  <option value="en">English</option>
-                </select>
-              </label>
-              <label class="inline">
-                <span>סגנון</span>
-                <select id="tone">
-                  <option value="auto" selected>אוטומטי</option>
-                  <option value="professional">מקצועי</option>
-                  <option value="sharp">חד</option>
-                  <option value="client">ללקוח</option>
-                  <option value="cursor">ל‑AI (Cursor)</option>
-                </select>
-              </label>
-              <label class="inline">
-                <span>סוג פלט</span>
-                <select id="outputType">
-                  <option value="auto" selected>אוטומטי</option>
-                  <option value="instructions">הוראות ביצוע</option>
-                  <option value="summary">סיכום</option>
-                  <option value="client_report">דוח ללקוח</option>
-                  <option value="checklist">Checklist</option>
-                </select>
-              </label>
+        <!-- 1–3: Input flow -->
+        <section class="panel panel-input" id="panelInput">
+          <div class="panel-body">
+            <ol class="steps" id="stepsList" aria-label="תהליך עבודה">
+              <li class="step"><span class="step-num">1</span><span id="step1">הדבק דוח</span></li>
+              <li class="step"><span class="step-num">2</span><span id="step2">בחר הגדרות</span></li>
+              <li class="step"><span class="step-num">3</span><span id="step3">לחץ ניתוח</span></li>
+            </ol>
+
+            <h2 class="section-heading" id="inputSectionTitle">קלט</h2>
+            <p class="section-hint" id="inputHint">טיפ: ככל שהדוח כולל טכנולוגיות ושגיאות, הניתוח מדויק יותר.</p>
+
+            <textarea
+              id="report"
+              class="textarea textarea-input"
+              aria-label="הדבק דוח"
+              placeholder=""
+            ></textarea>
+
+            <div class="input-meta">
+              <span id="charCount" class="counter">0 תווים</span>
+              <span id="lenBadge" class="badge is-short">קצר</span>
             </div>
-          </div>
 
-          <textarea
-            id="report"
-            class="textarea"
-            aria-label="הדבק דוח"
-            placeholder="הדבק כאן דוח מצב (טקסט חופשי). למשל: דוח אתר, דוח תוכנה, UI, Backend, שגיאות build, טכנולוגיות..."
-          ></textarea>
-
-          <div class="panel-footer">
-            <div class="hint-wrap">
-              <div class="hint" id="inputHint">טיפ: ככל שהדוח כולל טכנולוגיות + שגיאות/לוגים, הסיווג יהיה מדויק יותר.</div>
-              <div class="meta-line">
-                <span id="charCount" class="counter">0 תווים</span>
-                <span id="lenBadge" class="badge">קצר</span>
+            <div class="settings-bar" role="group" aria-labelledby="settingsBarLabel">
+              <span class="settings-bar-label" id="settingsBarLabel">הגדרות</span>
+              <div class="settings-bar-row">
+                <label class="inline inline-setting">
+                  <span id="lblOutputLang">שפת פלט</span>
+                  <select id="outputLang" aria-labelledby="lblOutputLang">
+                    <option value="auto" selected>אוטומטי</option>
+                    <option value="he">עברית</option>
+                    <option value="en">English</option>
+                  </select>
+                </label>
+                <label class="inline inline-setting">
+                  <span id="lblOutputType">סוג פלט</span>
+                  <select id="outputType" aria-labelledby="lblOutputType">
+                    <option value="auto" selected>אוטומטי</option>
+                    <option value="instructions">הוראות ביצוע</option>
+                    <option value="summary">סיכום</option>
+                    <option value="client_report">דוח ללקוח</option>
+                    <option value="checklist">Checklist</option>
+                  </select>
+                </label>
+                <label class="inline inline-setting">
+                  <span id="lblTone">טון</span>
+                  <select id="tone" aria-labelledby="lblTone">
+                    <option value="auto" selected>אוטומטי</option>
+                    <option value="professional">מקצועי</option>
+                    <option value="sharp">חד</option>
+                    <option value="client">ללקוח</option>
+                    <option value="cursor">ל‑AI (Cursor)</option>
+                  </select>
+                </label>
               </div>
             </div>
-            <button id="btnAnalyze" class="btn btn-primary" type="button">נתח</button>
+
+            <div class="cta-wrap">
+              <button id="btnAnalyze" class="btn btn-primary btn-cta" type="button">נתח דוח</button>
+            </div>
           </div>
         </section>
 
-        <section class="panel" id="panelOutput">
-          <div class="panel-header">
-            <div class="panel-title">פלט (תשובה מוכנה)</div>
-            <div class="panel-meta">
-              <div class="pill" id="pillTemplate">Template: —</div>
-              <div class="pill pill-confidence" id="pillConfidence">Confidence: —</div>
+        <!-- 4–5: Output -->
+        <section class="panel panel-output" id="panelOutput">
+          <div class="panel-body panel-body-output">
+            <h2 class="section-heading" id="outputSectionTitle">פלט שנוצר</h2>
+
+            <div class="output-insights" aria-live="polite">
+              <div class="pill pill-detected" id="pillDetected">
+                <span class="pill-key" id="pillDetectedKey">מצב מזוהה</span>
+                <span class="pill-val" id="pillDetectedVal">—</span>
+              </div>
+              <div class="pill pill-confidence" id="pillConfidence">
+                <span class="pill-key" id="pillConfidenceKey">רמת ביטחון</span>
+                <span class="pill-val" id="pillConfidenceVal">—</span>
+              </div>
             </div>
+            <p class="template-line" id="templateLine" hidden>
+              <span id="templateLineKey">תבנית פלט</span>:
+              <strong id="templateLineTitle">—</strong>
+            </p>
+
+            <textarea id="output" class="textarea textarea-output" aria-label="תוצאה מוכנה" readonly></textarea>
+
+            <div class="output-actions">
+              <button id="btnCopy" class="btn btn-secondary" type="button">העתק</button>
+              <button id="btnDownload" class="btn btn-secondary" type="button">הורד .md</button>
+            </div>
+
+            <details class="debug">
+              <summary id="debugSummary">פירוט ניתוח (debug)</summary>
+              <pre id="debug" class="debug-box"></pre>
+            </details>
           </div>
-
-          <div class="output-toolbar">
-            <button id="btnCopy" class="btn btn-secondary" type="button">העתק</button>
-            <button id="btnDownload" class="btn btn-secondary" type="button">הורד .md</button>
-          </div>
-
-          <textarea id="output" class="textarea textarea-output" aria-label="תוצאה מוכנה" readonly></textarea>
-
-          <details class="debug">
-            <summary>פירוט ניתוח (debug)</summary>
-            <pre id="debug" class="debug-box"></pre>
-          </details>
         </section>
       </section>
 
       <footer class="footer">
-        <div>Local MVP — עובד מקומית, בלי שרת.</div>
-        <div class="footer-note">פתח/י את הקובץ <code>index.html</code> בדפדפן.</div>
+        <div id="footerLegal">כלי מקומי בדפדפן בלבד — בלי שרת יישום, בלי API, בלי העלאה לרשת.</div>
+        <div class="footer-note" id="footerNote">
+          מודולים (ESM): אם פתיחה ישירה של <code>index.html</code> נחסמת, השתמש/י ב־<strong>Live Server</strong> / צפייה סטטית מקומית — רק לפיתוח, לא חלק מהמוצר.
+        </div>
       </footer>
     </main>
 

@@ -1,7 +1,31 @@
+import { TEMPLATE_KEYS } from "./rules.js";
+
+function softOpenHE(confidence) {
+  if (typeof confidence !== "number" || confidence >= 0.48) return "";
+  return `> **הערה**: התאמת התבנית חלשה — הדוח קצר או דל במילות מפתח. כדאי להוסיף סטאק, שגיאות/לוגים או מטרה מפורשת לתוכנית מדויקת יותר.\n\n`;
+}
+
+function softOpenEN(confidence) {
+  if (typeof confidence !== "number" || confidence >= 0.48) return "";
+  return `> **Note**: Weak template match — the report is short or sparse on keywords. Add stack, errors/logs, or a clear goal for a tighter plan.\n\n`;
+}
+
+function clientStabilityNoteHE(signals) {
+  const s = Array.isArray(signals) ? signals : [];
+  if (!s.includes("stability")) return "";
+  return `\n## הערת עקביות\nאם מופיעות בדוח שגיאות חמורות, כשלים (למשל 500) או אי־יציבות — יש לסגור אותן לפני הצגת “סטטוס מוכן ללקוח”.\n`;
+}
+
+function clientStabilityNoteEN(signals) {
+  const s = Array.isArray(signals) ? signals : [];
+  if (!s.includes("stability")) return "";
+  return `\n## Consistency note\nIf the report mentions severe errors (e.g. 500s), crashes, or instability, resolve those before presenting this as “client-ready” status.\n`;
+}
+
 const HE = {
   spa_upgrade: {
     title: "SPA / Frontend Upgrade",
-    render: ({ tone, facts, signals, confidence }) => `## Project Overview
+    render: ({ tone, facts, signals, confidence }) => `${softOpenHE(confidence)}## Project Overview
 הדוח מצביע על פרויקט Frontend/SPA עם בסיס קיים שאפשר לשדרג לחוויית שימוש נקייה, עקבית ומוכנה להצגה.
 
 ## What was detected (from the report)
@@ -147,9 +171,9 @@ ${toneFooter(tone)}
 
   client_report: {
     title: "Client Report",
-    render: ({ tone, confidence }) => `## Project Status (Client‑Ready)
+    render: ({ tone, confidence, signals }) => `## Project Status (Client‑Ready)
 להלן סטטוס מקצועי ומוכן להצגה ללקוח, כולל תמונת מצב, מטרות ושדרוגים מומלצים.
-
+${clientStabilityNoteHE(signals)}
 ## Current State
 - קיימת תשתית שעובדת, אך נדרשים ליטושים כדי להגיע לרמת מוצר “מוכן מסירה”.
 
@@ -238,6 +262,7 @@ ${toneFooter(tone)}
     title: "General",
     render: ({ tone, confidence, signals, facts, decision }) => `## Summary
 הדוח התקבל ונותח, אבל אין מספיק אינדיקציות כדי לבחור תבנית ייעודית בביטחון גבוה.
+הפלט כאן הוא **נקודת פתיחה אמינה** — לא תחליף לבדיקה מעמיקה של הקוד או הסביבה.
 
 ## What was detected (from the report)
 ${renderDetectedHE(facts)}
@@ -260,10 +285,37 @@ ${toneFooter(tone)}
 };
 
 const EN = {
+  spa_upgrade: {
+    title: "SPA / Frontend Upgrade",
+    render: ({ tone, facts, signals, confidence }) => `${softOpenEN(confidence)}## Project Overview
+The report points to a Frontend/SPA codebase that can be elevated to a cleaner, consistent, demo-ready experience.
+
+## What was detected (from the report)
+${renderDetectedEN(facts)}
+
+## Main Goal
+Reach a **client-ready** bar: consistent UI, smooth flows, clean builds, and strong quality hygiene.
+
+## Focus Areas
+- **UI/UX consistency**: visual hierarchy, spacing, typography, responsiveness.
+- **SPA flow**: navigation, state, loading/skeleton UX, friendly error states.
+- **Build stability**: clean install, build verification, warning triage.
+
+## Expected Result
+A modern, stable, visually strong product that feels professional for demos and handover.
+
+## Meta
+- **Template**: SPA Upgrade
+- **Confidence**: ${confidence}
+- **Signals**: ${signals.join(", ") || "—"}
+${toneFooterEn(tone)}
+`,
+  },
+
   ui_ux_fix: {
     title: "UI/UX Fix",
     render: ({ tone, facts, signals, confidence, reportText, decision }) => `## Summary
-The report points to a **UI/UX** focus (consistency, responsive behavior, accessibility).
+The report points to a **UI/UX** focus (consistency, responsive behavior, visual hierarchy).
 
 ## What was detected (from the report)
 ${renderDetectedEN(facts)}
@@ -271,20 +323,25 @@ ${renderDetectedEN(facts)}
 ## Priorities (Decision Engine)
 ${renderPrioritiesEN(decision)}
 
-## Recommended actions
-- Create a small design system (colors, typography, spacing, core components).
-- Run a responsive pass (mobile → tablet → desktop).
-- Add user feedback states (loading/empty/error) and consistent form validation.
-- Add basic accessibility (focus-visible, labels/aria, contrast, keyboard navigation).
+## Goal
+Make the interface clearer, cleaner, and more consistent — without breaking core functionality.
+
+## Recommended Actions
+${renderActionsEN(facts, "ui")}
 
 ## Report phrases (examples)
 ${renderQuotedIssueLinesEN(facts, reportText)}
+
+## Deliverables
+- Documented UI/UX issue list
+- Fixes on primary screens
+- Consistent component set (buttons/inputs/cards/modals)
 
 ## Meta
 - **Template**: UI/UX Fix
 - **Confidence**: ${confidence}
 - **Signals**: ${signals.join(", ") || "—"}
-${toneFooter(tone)}
+${toneFooterEn(tone)}
 `,
   },
 
@@ -299,20 +356,20 @@ ${renderDetectedEN(facts)}
 ## Priorities (Decision Engine)
 ${renderPrioritiesEN(decision)}
 
-## Focus areas
-- API contracts: validation + consistent error model.
-- Auth: JWT/session, permissions, refresh flows, edge cases.
-- DB: indexes, query performance, connection stability, timeouts.
-- Observability: useful logs + centralized error handling.
+## Focus Areas
+${renderActionsEN(facts, "backend")}
 
 ## Report phrases (examples)
 ${renderQuotedIssueLinesEN(facts, reportText)}
+
+## Expected Result
+A more stable, predictable backend with an API that is easy for the frontend to consume safely.
 
 ## Meta
 - **Template**: Backend / API
 - **Confidence**: ${confidence}
 - **Signals**: ${signals.join(", ") || "—"}
-${toneFooter(tone)}
+${toneFooterEn(tone)}
 `,
   },
 
@@ -340,7 +397,7 @@ ${renderQuotedIssueLinesEN(facts, reportText)}
 - **Template**: Stability Fix
 - **Confidence**: ${confidence}
 - **Signals**: ${signals.join(", ") || "—"}
-${toneFooter(tone)}
+${toneFooterEn(tone)}
 `,
   },
 
@@ -355,10 +412,8 @@ ${renderDetectedEN(facts)}
 ## Priorities (Decision Engine)
 ${renderPrioritiesEN(decision)}
 
-## Recommended actions
-- Baseline metrics (TTFB/LCP, slow screens/actions).
-- Frontend: reduce bundle, lazy-load, caching, image optimization.
-- Backend: query/index tuning, caching, avoid N+1 patterns.
+## Recommended Actions
+${renderActionsEN(facts, "performance")}
 
 ## Report phrases (examples)
 ${renderQuotedIssueLinesEN(facts, reportText)}
@@ -367,13 +422,72 @@ ${renderQuotedIssueLinesEN(facts, reportText)}
 - **Template**: Performance Fix
 - **Confidence**: ${confidence}
 - **Signals**: ${signals.join(", ") || "—"}
-${toneFooter(tone)}
+${toneFooterEn(tone)}
+`,
+  },
+
+  client_report: {
+    title: "Client Report",
+    render: ({ tone, confidence, signals }) => `## Project Status (Client-Ready)
+A professional status summary suitable for stakeholders: current state, goals, and recommended improvements.
+${clientStabilityNoteEN(signals)}
+## Current State
+- Core infrastructure works, but polish is required to reach true delivery-grade product quality.
+
+## Proposed Goal
+Improve stability, UX, and visual professionalism while preserving existing business logic.
+
+## Scope (High level)
+- UI/UX polish and responsiveness
+- Smoother product flow (SPA experience)
+- Quality checks before release
+
+## Next Steps
+- Extract pain points from the report
+- Prioritize work
+- Run a fix pass followed by QA
+
+## Meta
+- **Template**: Client Report
+- **Confidence**: ${confidence}
+${toneFooterEn(tone)}
 `,
   },
 
   final_qa: {
-    title: "QA Checklist",
-    render: ({ tone, confidence, facts, decision }) => `## QA Checklist
+    title: "Final QA",
+    render: ({ tone, confidence }) => `## Final QA Checklist (Before Delivery)
+
+## Build & Deploy
+- Fresh install completes without errors
+- Build/release passes without critical warnings
+- Validate production build behavior in a realistic environment
+
+## Functional QA
+- Core screens work end-to-end
+- Forms: validation + clear error messaging
+- Loading/empty/error states handled intentionally
+
+## UI/UX
+- Component consistency
+- Full responsive coverage
+- Basic accessibility hygiene
+
+## Stability
+- Consistent error handling patterns
+- Logs sufficient for diagnosis (without noise)
+
+## Meta
+- **Template**: Final QA
+- **Confidence**: ${confidence}
+${toneFooterEn(tone)}
+`,
+  },
+
+  fullstack_polish: {
+    title: "Fullstack Polish",
+    render: ({ tone, facts, signals, confidence, reportText, decision }) => `## Project Overview
+The system reads as **fullstack** (frontend + backend) with a solid base, but needs polish for stable, client-ready delivery.
 
 ## What was detected (from the report)
 ${renderDetectedEN(facts)}
@@ -381,18 +495,23 @@ ${renderDetectedEN(facts)}
 ## Priorities (Decision Engine)
 ${renderPrioritiesEN(decision)}
 
-## Checklist
-- Fresh install/build passes cleanly
-- Core flows work end-to-end
-- Forms: validation + clear errors
-- Loading/empty/error states covered
-- Responsive pass done
-- Basic accessibility pass (focus/labels/contrast)
+## Main Goal
+Deliver an end-to-end experience: consistent UI, predictable APIs, high stability, and clean build/deploy.
+
+## Focus Areas
+${renderActionsEN(facts, "fullstack")}
+
+## Report phrases (examples)
+${renderQuotedIssueLinesEN(facts, reportText)}
+
+## Expected Result
+A modern, stable, presentable system ready for real-world use and stakeholder demos.
 
 ## Meta
-- **Template**: QA Checklist
+- **Template**: Fullstack Polish
 - **Confidence**: ${confidence}
-${toneFooter(tone)}
+- **Signals**: ${signals.join(", ") || "—"}
+${toneFooterEn(tone)}
 `,
   },
 
@@ -400,6 +519,7 @@ ${toneFooter(tone)}
     title: "General",
     render: ({ confidence, tone, signals, facts, decision, reportText }) => `## Summary
 Report received and analyzed. Not enough strong signals to pick a specialized template with high confidence.
+This output is a **reliable starting point** — not a substitute for hands-on review of code and environment.
 
 ## What was detected (from the report)
 ${renderDetectedEN(facts)}
@@ -416,7 +536,7 @@ ${renderPrioritiesEN(decision)}
 - **Template**: General
 - **Confidence**: ${confidence}
 - **Signals**: ${signals.join(", ") || "—"}
-${toneFooter(tone)}
+${toneFooterEn(tone)}
 `,
   },
 };
@@ -426,6 +546,13 @@ function toneFooter(tone) {
   if (tone === "client") return `\n---\n**Style**: ללקוח — שפה נקייה, בלי ז׳רגון מיותר.\n`;
   if (tone === "cursor") return `\n---\n**Style**: ל‑AI (Cursor) — ממוקד ביצוע, נקודות מדויקות לאבחון.\n`;
   return `\n---\n**Style**: מקצועי — ברור, מסודר, פרקטי.\n`;
+}
+
+function toneFooterEn(tone) {
+  if (tone === "sharp") return `\n---\n**Style**: Sharp — short, direct, no fluff.\n`;
+  if (tone === "client") return `\n---\n**Style**: Client-ready — clean language, minimal jargon.\n`;
+  if (tone === "cursor") return `\n---\n**Style**: For AI (Cursor) — execution-focused, precise diagnostic points.\n`;
+  return `\n---\n**Style**: Professional — clear, structured, practical.\n`;
 }
 
 function renderList(items, empty = "—", prefix = "- ") {
@@ -521,6 +648,37 @@ function renderActionsHE(facts, mode) {
   return "- **Next steps**: תיעדוף, ביצוע, QA.";
 }
 
+function renderActionsEN(facts, mode) {
+  const hints = new Set((facts?.actionHints || []).filter(Boolean));
+  const lines = [];
+
+  if (mode === "ui" || mode === "fullstack") {
+    lines.push("- **Small design system**: colors, typography, spacing, core components.");
+    if (hints.has("ui_responsive")) lines.push("- **Responsive pass**: mobile → tablet → desktop (include RTL if applicable).");
+    if (hints.has("ui_accessibility")) lines.push("- **Accessibility**: visible focus, contrast, keyboard navigation, labels/aria.");
+    lines.push("- **UX pass**: loading/empty/error states, user feedback, forms and actions.");
+  }
+
+  if (mode === "backend" || mode === "fullstack") {
+    lines.push("- **API contracts**: validation, schemas, consistent error responses.");
+    if (hints.has("backend_auth")) lines.push("- **Auth**: JWT/session, permissions, refresh flows, login hardening.");
+    if (hints.has("backend_db")) lines.push("- **DB**: indexes, query performance, connection stability, timeouts.");
+    lines.push("- **Observability**: actionable logs, centralized error handling, basic tracing.");
+  }
+
+  if (mode === "performance") {
+    lines.push("- **Quick wins**: identify slow screens/actions, measure before/after.");
+    lines.push("- **Frontend performance**: smaller bundles, lazy-load, images, caching.");
+    lines.push("- **Backend performance**: query tuning, indexes, caching, avoid N+1.");
+    lines.push("- **UX**: skeletons/loading states, debounce, pagination where needed.");
+  }
+
+  if (mode === "ui" || mode === "backend" || mode === "performance" || mode === "fullstack") {
+    return lines.join("\n");
+  }
+  return "- **Next steps**: prioritize, execute, QA.";
+}
+
 function renderQuotedIssueLinesHE(facts, reportText) {
   const issues = (facts?.issueLines || []).filter(Boolean);
   if (issues.length) {
@@ -553,5 +711,20 @@ function renderPrioritiesHE(decision) {
 
 export function getTemplates(lang) {
   return lang === "en" ? EN : HE;
+}
+
+/** Ensures every canonical template key exists in both locales (no silent cross-language fallback). */
+export function verifyTemplateLocaleParity() {
+  const missingHe = TEMPLATE_KEYS.filter((k) => !HE[k]?.render);
+  const missingEn = TEMPLATE_KEYS.filter((k) => !EN[k]?.render);
+  const extraHe = Object.keys(HE).filter((k) => !TEMPLATE_KEYS.includes(k));
+  const extraEn = Object.keys(EN).filter((k) => !TEMPLATE_KEYS.includes(k));
+  return {
+    ok: missingHe.length === 0 && missingEn.length === 0 && extraHe.length === 0 && extraEn.length === 0,
+    missingHe,
+    missingEn,
+    extraHe,
+    extraEn,
+  };
 }
 

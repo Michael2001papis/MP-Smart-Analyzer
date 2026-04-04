@@ -18,7 +18,8 @@ export const RULES = [
   // Frontend / SPA
   {
     id: "frontend_stack_react",
-    whenAny: ["react", "vite", "webpack", "tsc", "spa", "frontend", "ui"],
+    // Intentionally omit bare "ui" — use ui_ux_focus for pure UI wording to avoid false SPA wins.
+    whenAny: ["react", "vite", "webpack", "tsc", "spa", "frontend"],
     weights: { spa_upgrade: 2.0, ui_ux_fix: 0.5 },
     signals: ["frontend"],
   },
@@ -83,6 +84,112 @@ export const RULES = [
     weights: { fullstack_polish: 2.3, final_qa: 0.9, client_report: 0.6 },
     signals: ["fullstack"],
   },
+
+  {
+    id: "frontend_alt_stacks",
+    whenAny: ["vue", "nuxt", "angular", "svelte", "solidjs", "remix", "astro"],
+    weights: { spa_upgrade: 1.5, ui_ux_fix: 0.65, final_qa: 0.45 },
+    signals: ["frontend"],
+  },
+  {
+    id: "typescript_stack",
+    whenAny: ["typescript", "tsx"],
+    weights: { spa_upgrade: 0.85, final_qa: 0.35, stability_fix: 0.2 },
+    signals: ["frontend"],
+  },
+  {
+    id: "python_backend",
+    whenAny: ["python", "django", "flask", "fastapi", "uvicorn", "gunicorn", "sqlalchemy"],
+    weights: { backend_api: 2.0, fullstack_polish: 0.75 },
+    signals: ["backend"],
+  },
+  {
+    id: "security_focus",
+    whenAny: ["security", "xss", "csrf", "cors", "injection", "oauth", "penetration", "cve", "vulnerability"],
+    weights: { backend_api: 1.35, stability_fix: 1.1, final_qa: 0.75 },
+    signals: ["security"],
+  },
+  {
+    id: "test_ci_focus",
+    whenAny: ["jest", "vitest", "playwright", "cypress", "e2e", "unit test", "github actions", "ci/cd", "gitlab ci", "pipeline"],
+    weights: { final_qa: 1.85, stability_fix: 0.55, fullstack_polish: 0.45 },
+    signals: ["quality"],
+  },
+  {
+    id: "orm_data_layer",
+    whenAny: ["prisma", "typeorm", "sequelize", "drizzle"],
+    weights: { backend_api: 1.45, stability_fix: 0.35 },
+    signals: ["backend"],
+  },
+  {
+    id: "realtime_layer",
+    whenAny: ["websocket", "socket.io", "sse", "server-sent events"],
+    weights: { backend_api: 1.35, fullstack_polish: 0.55 },
+    signals: ["backend"],
+  },
+  {
+    id: "mobile_pwa",
+    whenAny: ["pwa", "service worker", "capacitor", "react native", "expo", "ionic"],
+    weights: { spa_upgrade: 1.0, ui_ux_fix: 1.1, final_qa: 0.7 },
+    signals: ["frontend"],
+  },
+  {
+    id: "backend_jvm_systems",
+    whenAny: [
+      "spring boot",
+      "springboot",
+      "kotlin",
+      "quarkus",
+      "micronaut",
+      "golang",
+      "actix",
+      "axum",
+      "asp.net",
+      ".net core",
+      "dotnet",
+      "entity framework",
+      "hibernate",
+      "jdbc",
+    ],
+    weights: { backend_api: 1.9, fullstack_polish: 0.65, stability_fix: 0.25 },
+    signals: ["backend"],
+  },
+  {
+    id: "cms_content",
+    whenAny: ["wordpress", "drupal", "contentful", "strapi", "sanity", "headless cms"],
+    weights: { spa_upgrade: 1.05, backend_api: 0.85, final_qa: 0.55 },
+    signals: ["content"],
+  },
+  {
+    id: "payments_billing",
+    whenAny: ["stripe", "paypal", "billing", "subscription", "checkout", "pci-dss", "pci"],
+    weights: { backend_api: 1.55, stability_fix: 0.65, final_qa: 0.72 },
+    signals: ["payments"],
+  },
+  {
+    id: "i18n_locale",
+    whenAny: ["i18n", "internationalization", "localization", "locale", "l10n", "translation"],
+    weights: { ui_ux_fix: 1.25, spa_upgrade: 0.55, final_qa: 0.42 },
+    signals: ["i18n"],
+  },
+  {
+    id: "monorepo_tooling",
+    whenAny: ["monorepo", "turborepo", "pnpm workspace", "lerna"],
+    weights: { final_qa: 1.05, spa_upgrade: 0.48, stability_fix: 0.38, fullstack_polish: 0.4 },
+    signals: ["monorepo"],
+  },
+  {
+    id: "messaging_events",
+    whenAny: ["kafka", "rabbitmq", "amazon sqs", "aws sqs", "sns", "pubsub", "pub/sub", "event bus", "message queue"],
+    weights: { backend_api: 1.65, stability_fix: 0.48, fullstack_polish: 0.35 },
+    signals: ["integrations"],
+  },
+  {
+    id: "observability_ops",
+    whenAny: ["datadog", "grafana", "prometheus", "opentelemetry", "sentry", "new relic", "logging", "structured logs"],
+    weights: { stability_fix: 0.85, backend_api: 0.9, final_qa: 0.55 },
+    signals: ["observability"],
+  },
 ];
 
 export function normalize(text) {
@@ -124,10 +231,18 @@ function extractTech(text) {
     "nextjs",
     "vite",
     "webpack",
+    "vue",
+    "nuxt",
+    "angular",
+    "svelte",
     "typescript",
     "node",
     "express",
     "nestjs",
+    "python",
+    "django",
+    "flask",
+    "fastapi",
     "jwt",
     "mongodb",
     "mongo",
@@ -138,13 +253,14 @@ function extractTech(text) {
     "redis",
     "graphql",
     "rest",
+    "prisma",
     "docker",
     "docker-compose",
     "kubernetes",
     "nginx",
     "vercel",
   ];
-  return uniq(needles.filter((n) => text.includes(n))).slice(0, 10);
+  return uniq(needles.filter((n) => text.includes(n))).slice(0, 12);
 }
 
 function extractIssueLines(rawText) {
@@ -353,12 +469,71 @@ export function decide(analysis, templateKey) {
   };
 }
 
-export function pickTemplate(scores) {
-  const entries = Object.entries(scores || {});
-  entries.sort((a, b) => b[1] - a[1]);
+/**
+ * Short / non-technical reports get a modest **general** boost so we do not
+ * over-fit a specialized template from one accidental keyword.
+ */
+function applySparseReportBias(base, facts, matchedRules) {
+  const len = Number(facts?.length) || 0;
+  const ruleCount = Array.isArray(matchedRules) ? matchedRules.length : 0;
+  const techCount = (facts?.tech || []).length;
+  const issueCount = (facts?.issueLines || []).length;
+
+  const verySparse = len < 64 && ruleCount <= 1 && techCount === 0 && issueCount === 0;
+  const sparse = len < 120 && ruleCount <= 2 && techCount <= 1 && issueCount <= 1;
+
+  if (verySparse) base.general += 1.05;
+  else if (sparse) base.general += 0.52;
+}
+
+/**
+ * Context boosts reduce “coin toss” when multiple templates tie on keywords.
+ * Tie-break uses TEMPLATE_KEYS order (deterministic).
+ */
+export function pickTemplate(scores, facts = null, matchedRules = null) {
+  const base = { ...(scores || {}) };
+  for (const k of TEMPLATE_KEYS) {
+    if (!(k in base)) base[k] = 0;
+    else base[k] = Number(base[k]) || 0;
+  }
+
+  const hints = new Set(facts?.actionHints || []);
+  const rules = new Set(matchedRules || []);
+
+  if (hints.has("stability_errors") && rules.has("stability")) {
+    base.stability_fix += 0.48;
+  }
+  if (hints.has("performance") && rules.has("performance_focus")) {
+    base.performance_fix += 0.28;
+  }
+  if (rules.has("ui_ux_focus") && !rules.has("stability")) {
+    base.ui_ux_fix += 0.18;
+  }
+  if (rules.has("fullstack_combo") || (rules.has("backend_node") && rules.has("frontend_stack_react"))) {
+    base.fullstack_polish += 0.22;
+  }
+
+  applySparseReportBias(base, facts, matchedRules);
+
+  const entries = TEMPLATE_KEYS.map((k) => [k, base[k]]);
+  entries.sort((a, b) => {
+    if (b[1] !== a[1]) return b[1] - a[1];
+    return TEMPLATE_KEYS.indexOf(a[0]) - TEMPLATE_KEYS.indexOf(b[0]);
+  });
+
   const [bestKey, bestScore] = entries[0] || ["general", 0];
-  const total = entries.reduce((sum, [, v]) => sum + (Number(v) || 0), 0) || 1;
-  const confidence = Math.min(0.95, Math.max(0.25, (bestScore / total) + 0.25));
+  const secondScore = entries[1]?.[1] ?? 0;
+  const total = entries.reduce((sum, [, v]) => sum + v, 0);
+
+  if (!total || bestScore <= 0) {
+    return { templateKey: "general", confidence: 0.25 };
+  }
+
+  const margin = bestScore - secondScore;
+  const share = bestScore / total;
+  let confidence = 0.28 + 0.44 * Math.min(1, share * 1.15) + 0.24 * Math.min(1, margin / 2.8);
+  if (margin < 0.2 && share < 0.42) confidence -= 0.07;
+  confidence = Math.min(0.95, Math.max(0.25, confidence));
   return { templateKey: bestKey, confidence: Number(confidence.toFixed(2)) };
 }
 

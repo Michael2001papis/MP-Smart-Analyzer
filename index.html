@@ -3,36 +3,36 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>MP Smart Analyzer</title>
+    <title>AI Research Console — MP Smart Analyzer</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body class="mode-youth quick-mode">
-    <main class="app">
-      <!-- 1 · Header -->
-      <header class="app-header">
-        <div class="header-brand">
-          <div class="logo-mark" aria-hidden="true">MP</div>
-          <div class="header-titles">
-            <h1 class="product-name">MP Smart Analyzer</h1>
-            <p class="product-tagline" id="productTagline"></p>
+    <main class="app app--arc">
+      <!-- Layer 1 · CONTROL (compact) -->
+      <header class="control-deck">
+        <div class="control-deck__brand">
+          <div class="logo-mark logo-mark--sm" aria-hidden="true">MP</div>
+          <div class="control-deck__titles">
+            <span class="product-name--compact">MP Smart Analyzer</span>
+            <span class="product-tag--compact" id="productTagline"></span>
           </div>
         </div>
-        <div class="header-actions">
-          <div class="sys-pill" aria-live="polite">
+        <div class="control-deck__actions">
+          <div class="sys-pill sys-pill--deck" aria-live="polite">
             <span class="sys-dot" aria-hidden="true"></span>
             <span id="systemStatusText"></span>
           </div>
-          <div class="exp-toggle" role="group" aria-labelledby="expModeLabel">
+          <div class="exp-toggle exp-toggle--tight" role="group" aria-labelledby="expModeLabel">
             <span class="exp-toggle-label" id="expModeLabel"></span>
-            <button type="button" class="chip" id="btnModeYouth" aria-pressed="true"></button>
-            <button type="button" class="chip" id="btnModePro" aria-pressed="false"></button>
+            <button type="button" class="chip chip--sm" id="btnModeYouth" aria-pressed="true"></button>
+            <button type="button" class="chip chip--sm" id="btnModePro" aria-pressed="false"></button>
           </div>
-          <div class="exp-toggle" role="group" aria-labelledby="quickModeLabel">
+          <div class="exp-toggle exp-toggle--tight" role="group" aria-labelledby="quickModeLabel">
             <span class="exp-toggle-label" id="quickModeLabel"></span>
-            <button type="button" class="chip is-active" id="btnModeQuick" aria-pressed="true"></button>
-            <button type="button" class="chip" id="btnModeRich" aria-pressed="false"></button>
+            <button type="button" class="chip chip--sm is-active" id="btnModeQuick" aria-pressed="true"></button>
+            <button type="button" class="chip chip--sm" id="btnModeRich" aria-pressed="false"></button>
           </div>
-          <label class="ctrl-select">
+          <label class="ctrl-select ctrl-select--deck">
             <span id="uiLangLabel"></span>
             <select id="lang" aria-label="UI language">
               <option value="he" selected>עברית</option>
@@ -48,16 +48,58 @@
         <div id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></div>
       </div>
 
+      <p class="arc-badge" id="arcBadge" aria-hidden="true"></p>
+
       <nav class="tabs" aria-label="Mobile workspace">
         <button type="button" id="tabInput" class="tab is-active"></button>
         <button type="button" id="tabOutput" class="tab"></button>
       </nav>
 
-      <!-- 2 · Workspace: Input | Output (LTR grid = lab layout) -->
-      <div class="workspace" dir="ltr">
-        <section class="ws-panel ws-input" id="panelInput">
-          <header class="ws-head">
-            <span class="ws-kicker" id="inputKicker"></span>
+      <!-- Layer 3 · SYSTEM INTELLIGENCE (premium — above core) -->
+      <section class="system-intelligence system-intelligence--empty" id="intelSection" aria-labelledby="intelSectionTitle">
+        <div class="system-intelligence__glow" aria-hidden="true"></div>
+        <div class="system-intelligence__inner">
+          <header class="system-intelligence__head">
+            <h2 class="system-intelligence__title" id="intelSectionTitle"></h2>
+            <p class="system-intelligence__sub" id="intelSectionSub"></p>
+          </header>
+
+          <div class="intel-metrics" aria-live="polite">
+            <div class="metric metric--intel" id="pillDetected">
+              <span class="metric-label" id="pillDetectedKey"></span>
+              <span class="metric-value" id="pillDetectedVal">—</span>
+            </div>
+            <div class="metric metric--intel metric--confidence" id="pillConfidence">
+              <span class="metric-label" id="pillConfidenceKey"></span>
+              <span class="metric-value" id="pillConfidenceVal">—</span>
+            </div>
+          </div>
+          <p class="template-meta template-meta--intel" id="templateLine" hidden>
+            <span id="templateLineKey"></span>:
+            <strong id="templateLineTitle">—</strong>
+          </p>
+
+          <p class="intel-placeholder" id="intelPlaceholder"></p>
+
+          <div class="intel-brief" id="intelBrief" hidden aria-labelledby="intelBriefKicker">
+            <div class="intel-brief-head">
+              <span class="intel-brief-kicker" id="intelBriefKicker"></span>
+            </div>
+            <pre class="intel-brief-body" id="intelBriefBody"></pre>
+          </div>
+
+          <details class="why-result" id="whyResultBlock">
+            <summary id="whyResultSummary"></summary>
+            <pre class="why-result__pre" id="whyResultPre"></pre>
+          </details>
+        </div>
+      </section>
+
+      <!-- Layer 2 · CORE: Input | Output -->
+      <div class="workspace workspace--core" dir="ltr">
+        <section class="ws-panel ws-input ws-panel--data" id="panelInput">
+          <header class="ws-head ws-head--data">
+            <span class="ws-kicker ws-kicker--data" id="inputKicker"></span>
             <h2 class="ws-title" id="inputSectionTitle"></h2>
           </header>
 
@@ -80,7 +122,7 @@
                 <li id="guide4"></li>
               </ul>
             </div>
-            <div class="editor-frame">
+            <div class="editor-frame editor-frame--data">
               <textarea
                 id="report"
                 class="editor editor--data"
@@ -88,7 +130,7 @@
                 aria-describedby="inputHint reportGuideBlock"
                 autocomplete="off"
                 spellcheck="true"
-                rows="16"
+                rows="14"
                 placeholder=""
               ></textarea>
             </div>
@@ -100,41 +142,34 @@
           </div>
         </section>
 
-        <section class="ws-panel ws-output" id="panelOutput">
-          <header class="ws-head">
-            <span class="ws-kicker ws-kicker--violet" id="outputKicker"></span>
+        <section class="ws-panel ws-output ws-panel--response" id="panelOutput">
+          <header class="ws-head ws-head--response">
+            <span class="ws-kicker ws-kicker--response" id="outputKicker"></span>
             <h2 class="ws-title" id="outputSectionTitle"></h2>
           </header>
 
-          <div class="metric-row" aria-live="polite">
-            <div class="metric" id="pillDetected">
-              <span class="metric-label" id="pillDetectedKey"></span>
-              <span class="metric-value" id="pillDetectedVal">—</span>
+          <div class="output-structured">
+            <div class="output-block output-block--summary">
+              <span class="output-block__label" id="outputSummaryLabel"></span>
+              <p class="output-summary-line" id="outputSummaryLine"></p>
             </div>
-            <div class="metric metric--confidence" id="pillConfidence">
-              <span class="metric-label" id="pillConfidenceKey"></span>
-              <span class="metric-value" id="pillConfidenceVal">—</span>
+            <div class="output-block output-block--signals">
+              <span class="output-block__label" id="outputSignalsLabel"></span>
+              <div class="output-signals-row" id="outputSignalsRow"></div>
             </div>
-          </div>
-          <p class="template-meta" id="templateLine" hidden>
-            <span id="templateLineKey"></span>:
-            <strong id="templateLineTitle">—</strong>
-          </p>
-
-          <section class="intel-brief" id="intelBrief" hidden aria-labelledby="intelBriefKicker">
-            <div class="intel-brief-head">
-              <span class="intel-brief-kicker" id="intelBriefKicker"></span>
+            <div class="output-block output-block--main">
+              <span class="output-block__label" id="outputMainLabel"></span>
+              <div class="editor-frame editor-frame--readonly editor-frame--response">
+                <textarea id="output" class="editor editor--output" readonly aria-label="Generated output"></textarea>
+              </div>
             </div>
-            <pre class="intel-brief-body" id="intelBriefBody"></pre>
-          </section>
-
-          <div class="editor-frame editor-frame--readonly">
-            <textarea id="output" class="editor editor--output" readonly aria-label="Analysis output"></textarea>
-          </div>
-
-          <div class="secondary-actions">
-            <button type="button" class="btn btn-secondary btn-compact" id="btnCopy"></button>
-            <button type="button" class="btn btn-secondary btn-compact" id="btnDownload"></button>
+            <div class="output-block output-block--actions">
+              <span class="output-block__label" id="actionsLabel"></span>
+              <div class="secondary-actions">
+                <button type="button" class="btn btn-secondary btn-compact" id="btnCopy"></button>
+                <button type="button" class="btn btn-secondary btn-compact" id="btnDownload"></button>
+              </div>
+            </div>
           </div>
 
           <details class="debug-block">
@@ -144,7 +179,7 @@
         </section>
       </div>
 
-      <!-- 3 · Controls dock -->
+      <!-- Settings + Run -->
       <section class="controls-dock" aria-labelledby="settingsBarLabel">
         <div class="controls-dock-inner">
           <div class="settings-row">

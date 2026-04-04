@@ -1,6 +1,6 @@
 import { decide, evaluateRules, pickTemplate, normalize, assessReportUsability } from "./rules.js";
 import { getTemplates, getInvalidInputMarkdown } from "./templates.js";
-import { buildIntelBriefMarkdown, getInputTypeLabel } from "./intelLayer.js";
+import { buildIntelBriefMarkdown, getInputTypeLabel, getSignalDisplayLabels } from "./intelLayer.js";
 
 const $ = (id) => document.getElementById(id);
 const DEBUG = new URLSearchParams(window.location.search).has("debug");
@@ -71,6 +71,20 @@ const els = {
   intelBrief: $("intelBrief"),
   intelBriefKicker: $("intelBriefKicker"),
   intelBriefBody: $("intelBriefBody"),
+  intelSection: $("intelSection"),
+  intelSectionTitle: $("intelSectionTitle"),
+  intelSectionSub: $("intelSectionSub"),
+  intelPlaceholder: $("intelPlaceholder"),
+  arcBadge: $("arcBadge"),
+  outputSummaryLine: $("outputSummaryLine"),
+  outputSignalsRow: $("outputSignalsRow"),
+  outputSummaryLabel: $("outputSummaryLabel"),
+  outputSignalsLabel: $("outputSignalsLabel"),
+  outputMainLabel: $("outputMainLabel"),
+  actionsLabel: $("actionsLabel"),
+  whyResultBlock: $("whyResultBlock"),
+  whyResultSummary: $("whyResultSummary"),
+  whyResultPre: $("whyResultPre"),
 };
 
 function requireEl(name, el) {
@@ -144,6 +158,20 @@ function assertRequiredEls() {
   requireEl("intelBrief", els.intelBrief);
   requireEl("intelBriefKicker", els.intelBriefKicker);
   requireEl("intelBriefBody", els.intelBriefBody);
+  requireEl("intelSection", els.intelSection);
+  requireEl("intelSectionTitle", els.intelSectionTitle);
+  requireEl("intelSectionSub", els.intelSectionSub);
+  requireEl("intelPlaceholder", els.intelPlaceholder);
+  requireEl("arcBadge", els.arcBadge);
+  requireEl("outputSummaryLine", els.outputSummaryLine);
+  requireEl("outputSignalsRow", els.outputSignalsRow);
+  requireEl("outputSummaryLabel", els.outputSummaryLabel);
+  requireEl("outputSignalsLabel", els.outputSignalsLabel);
+  requireEl("outputMainLabel", els.outputMainLabel);
+  requireEl("actionsLabel", els.actionsLabel);
+  requireEl("whyResultBlock", els.whyResultBlock);
+  requireEl("whyResultSummary", els.whyResultSummary);
+  requireEl("whyResultPre", els.whyResultPre);
 }
 
 const EXP_STORAGE_KEY = "MP_EXPERIENCE";
@@ -164,7 +192,7 @@ const STRINGS = {
     inputTab: "קלט",
     outputTab: "פלט",
     needReport: "נא להזין דוח לפני הניתוח",
-    analyzeComplete: "הניתוח הושלם",
+    analyzeComplete: "הניתוח הושלם · תגובת מערכת",
     inputRejected: "הקלט לא זוהה כדוח תקף — לא נוצר דוח מקצועי (ראה הסבר בפלט)",
     productTagline: "נתח. הבן. שפר.",
     systemActive: "פעיל",
@@ -174,13 +202,26 @@ const STRINGS = {
     quickModeLabel: "תגובה",
     modeQuick: "מהיר",
     modeRich: "עשיר",
+    arcBadge: "AI Research Console — רמת Pro",
+    systemIntelligenceTitle: "אינטליגנציית מערכת",
+    systemIntelligenceSub: "מנוע חוקים מקומי · שקיפות מלאה · בלי שליחת דוחות לענן",
+    intelWaitPlaceholder: "הרץ ניתוח כדי לאכלס את שכבת האינטליגנציה (סיכום מערכת, אותות והנמקה).",
+    outputSummaryLabel: "תקציר",
+    outputSignalsLabel: "אותות מרכזיים",
+    generatedOutputLabel: "פלט שנוצר",
+    actionsLabel: "פעולות",
+    whyResultSummary: "למה התקבלה התוצאה? (שקיפות)",
+    whyRulesPrefix: "חוקים שהותאמו:",
+    whySignalsPrefix: "אותות גולמיים:",
+    signalsNone: "אין אותות בולטים",
+    summaryRejected: "הקלט נחסם בשלב איכות — לא נוצר פלט מקצועי.",
     inputKicker: "נתונים",
-    outputKicker: "פלט",
+    outputKicker: "OUTPUT",
     step1: "הדבק דוח",
     step2: "בחר הגדרות",
     step3: "הרץ ניתוח",
     inputTitle: "קלט נתונים",
-    outputTitle: "פלט ניתוח",
+    outputTitle: "תגובת מערכת",
     inputHintTip:
       "טיפ: ככל שיש בדוח סטאק, בעיות מפורטות (כרשימה) ומטרה ברורה — הניתוח והפלט יהיו מדויקים ורלוונטיים יותר.",
     settingsBar: "הגדרות מערכת",
@@ -235,7 +276,7 @@ Backend: Express + MongoDB
     short: "קצר",
     medium: "בינוני",
     long: "ארוך",
-    intelBriefKicker: "שכבת הבנה · לפני הפלט",
+    intelBriefKicker: "קריאת מערכת",
   },
   en: {
     analyze: "Run Analysis",
@@ -247,7 +288,7 @@ Backend: Express + MongoDB
     inputTab: "Input",
     outputTab: "Output",
     needReport: "Please enter a report first",
-    analyzeComplete: "Analysis complete",
+    analyzeComplete: "Analysis completed · System response",
     inputRejected: "Input is not a valid report — no professional brief was generated (see output)",
     productTagline: "Analyze. Understand. Improve.",
     systemActive: "Active",
@@ -257,13 +298,26 @@ Backend: Express + MongoDB
     quickModeLabel: "Response",
     modeQuick: "Quick",
     modeRich: "Rich",
+    arcBadge: "AI Research Console — Pro Level",
+    systemIntelligenceTitle: "System Intelligence",
+    systemIntelligenceSub: "Local rules engine · Full transparency · No cloud upload",
+    intelWaitPlaceholder: "Run analysis to populate system intelligence (read, signals, reasoning).",
+    outputSummaryLabel: "Summary",
+    outputSignalsLabel: "Key signals",
+    generatedOutputLabel: "Generated output",
+    actionsLabel: "Actions",
+    whyResultSummary: "Why this result? (transparency)",
+    whyRulesPrefix: "Matched rules:",
+    whySignalsPrefix: "Raw signals:",
+    signalsNone: "No strong signals",
+    summaryRejected: "Input blocked by quality gate — no professional brief.",
     inputKicker: "Data",
-    outputKicker: "Output",
+    outputKicker: "OUTPUT",
     step1: "Paste your report",
     step2: "Choose settings",
     step3: "Run analysis",
     inputTitle: "Data Input",
-    outputTitle: "Analysis Output",
+    outputTitle: "System Response",
     inputHintTip:
       "Tip: the more you include stack, bullet-point issues, and a clear goal, the sharper and more relevant the output.",
     settingsBar: "System settings",
@@ -535,13 +589,53 @@ function setStatus(message, kind = "info") {
 function setIntelBrief(markdown) {
   const raw = typeof markdown === "string" ? markdown : "";
   const text = raw.trim();
-  if (!text) {
-    els.intelBrief.hidden = true;
-    els.intelBriefBody.textContent = "";
-    return;
+  const has = Boolean(text);
+  els.intelBrief.hidden = !has;
+  els.intelBriefBody.textContent = has ? raw : "";
+  els.intelPlaceholder.hidden = has;
+  els.intelSection.classList.toggle("system-intelligence--empty", !has);
+}
+
+function clearStructuredOutput() {
+  els.outputSummaryLine.textContent = "";
+  els.outputSignalsRow.replaceChildren();
+  els.whyResultPre.textContent = "";
+  els.whyResultBlock.open = false;
+}
+
+function setStructuredOutput(res, uiLang) {
+  const s = STRINGS[uiLang] || STRINGS.he;
+  const outLang = res.outputLang === "en" ? "en" : "he";
+  const labels = getSignalDisplayLabels(res.analysis?.signals, outLang, 16);
+
+  if (res.isRejectedInput) {
+    els.outputSummaryLine.textContent = s.summaryRejected;
+  } else if (res.templateTitle && typeof res.confidence === "number") {
+    const tier =
+      res.confidence >= 0.75 ? s.confHigh : res.confidence >= 0.5 ? s.confMid : s.confLow;
+    els.outputSummaryLine.textContent = `${res.templateTitle} · ${tier} · ${Math.round(res.confidence * 100)}%`;
+  } else {
+    els.outputSummaryLine.textContent = res.templateTitle || "—";
   }
-  els.intelBrief.hidden = false;
-  els.intelBriefBody.textContent = raw;
+
+  els.outputSignalsRow.replaceChildren();
+  if (labels.length) {
+    for (const lab of labels) {
+      const span = document.createElement("span");
+      span.className = "signal-chip";
+      span.textContent = lab;
+      els.outputSignalsRow.appendChild(span);
+    }
+  } else {
+    const span = document.createElement("span");
+    span.className = "signal-chip signal-chip--muted";
+    span.textContent = s.signalsNone;
+    els.outputSignalsRow.appendChild(span);
+  }
+
+  const rules = (res.analysis?.matchedRules || []).join(", ") || "—";
+  const sigRaw = (res.analysis?.signals || []).join(", ") || "—";
+  els.whyResultPre.textContent = `${s.whyRulesPrefix} ${rules}\n${s.whySignalsPrefix} ${sigRaw}`;
 }
 
 function composedExportBody() {
@@ -562,13 +656,16 @@ function showToast(message) {
   toastTimer = setTimeout(() => els.toast.classList.remove("is-visible"), ms);
 }
 
-function setPanelsState({ input = "normal", output = "normal" } = {}) {
+function setPanelsState({ input = "normal", output = "normal", intel = "normal" } = {}) {
   els.panelInput.classList.remove("is-error", "is-success");
   els.panelOutput.classList.remove("is-error", "is-success");
+  els.intelSection.classList.remove("is-error", "is-success");
   if (input === "error") els.panelInput.classList.add("is-error");
   if (input === "success") els.panelInput.classList.add("is-success");
   if (output === "error") els.panelOutput.classList.add("is-error");
   if (output === "success") els.panelOutput.classList.add("is-success");
+  if (intel === "error") els.intelSection.classList.add("is-error");
+  if (intel === "success") els.intelSection.classList.add("is-success");
 }
 
 function setButtonsState() {
@@ -701,6 +798,15 @@ function applyLanguageUI() {
   document.documentElement.dir = lang === "en" ? "ltr" : "rtl";
 
   els.productTagline.textContent = s.productTagline;
+  els.arcBadge.textContent = s.arcBadge;
+  els.intelSectionTitle.textContent = s.systemIntelligenceTitle;
+  els.intelSectionSub.textContent = s.systemIntelligenceSub;
+  els.intelPlaceholder.textContent = s.intelWaitPlaceholder;
+  els.outputSummaryLabel.textContent = s.outputSummaryLabel;
+  els.outputSignalsLabel.textContent = s.outputSignalsLabel;
+  els.outputMainLabel.textContent = s.generatedOutputLabel;
+  els.actionsLabel.textContent = s.actionsLabel;
+  els.whyResultSummary.textContent = s.whyResultSummary;
   els.systemStatusText.textContent = s.systemActive;
   els.expModeLabel.textContent = s.expModeLabel;
   els.btnModeYouth.textContent = s.modeYouth;
@@ -797,16 +903,17 @@ function analyze() {
   if (!reportText.trim()) {
     els.output.value = "";
     setIntelBrief("");
+    clearStructuredOutput();
     setOutputInsights(null, null, null);
     els.debug.textContent = "";
-    setPanelsState({ input: "error", output: "normal" });
+    setPanelsState({ input: "error", output: "normal", intel: "normal" });
     setStatus(s.needReport, "error");
     els.report.focus();
     setButtonsState();
     return;
   }
 
-  setPanelsState({ input: "normal", output: "normal" });
+  setPanelsState({ input: "normal", output: "normal", intel: "normal" });
 
   try {
     if (DEBUG) {
@@ -837,6 +944,7 @@ function analyze() {
       res.isRejectedInput ? null : res.templateTitle,
       res.confidence,
     );
+    setStructuredOutput(res, lang);
     els.debug.textContent = toPrettyJson({
       templateKey: res.templateKey,
       confidence: res.confidence,
@@ -854,14 +962,18 @@ function analyze() {
     });
 
     if (res.isRejectedInput) {
-      setPanelsState({ input: "error", output: "normal" });
+      setPanelsState({ input: "error", output: "normal", intel: "error" });
       els.panelOutput.classList.remove("flash");
+      els.intelSection.classList.remove("flash-intel");
       setStatus(s.inputRejected, "error");
     } else {
-      setPanelsState({ input: "success", output: "success" });
+      setPanelsState({ input: "success", output: "success", intel: "success" });
       els.panelOutput.classList.remove("flash");
+      els.intelSection.classList.remove("flash-intel");
       if (!quick) {
+        void els.intelSection.offsetWidth;
         void els.panelOutput.offsetWidth;
+        els.intelSection.classList.add("flash-intel");
         els.panelOutput.classList.add("flash");
       }
       setStatus(s.analyzeComplete, "success");
@@ -870,12 +982,13 @@ function analyze() {
     const msg = err && err.message ? err.message : String(err);
     console.error("analyze_failed", err);
     setIntelBrief("");
+    clearStructuredOutput();
     els.output.value = lang === "en" ? `Analysis failed: ${msg}` : `הניתוח נכשל: ${msg}`;
     els.debug.textContent = DEBUG
       ? (err && err.stack ? String(err.stack) : msg)
       : toPrettyJson({ error: msg });
     setOutputInsights(null, null, null);
-    setPanelsState({ input: "normal", output: "error" });
+    setPanelsState({ input: "normal", output: "error", intel: "normal" });
     setStatus(lang === "en" ? "Analysis failed. Check debug/console." : "הניתוח נכשל. בדוק debug/console.", "error");
     setButtonsState();
   }
@@ -887,9 +1000,10 @@ els.btnClear.addEventListener("click", () => {
   els.report.value = "";
   els.output.value = "";
   setIntelBrief("");
+  clearStructuredOutput();
   els.debug.textContent = "";
   setOutputInsights(null, null, null);
-  setPanelsState({ input: "normal", output: "normal" });
+  setPanelsState({ input: "normal", output: "normal", intel: "normal" });
   setStatus("", "info");
   updateCounts();
   setButtonsState();
@@ -898,7 +1012,7 @@ els.btnClear.addEventListener("click", () => {
 els.btnSample.addEventListener("click", () => {
   els.report.value = sampleReport();
   updateCounts();
-  setPanelsState({ input: "normal", output: "normal" });
+  setPanelsState({ input: "normal", output: "normal", intel: "normal" });
   setStatus("", "info");
   setActiveTab("input");
 });
@@ -973,6 +1087,8 @@ applyExperienceMode(readExperienceMode());
 applyQuickMode(readQuickMode());
 applyLanguageUI();
 setOutputInsights(null, null, null);
+setIntelBrief("");
+clearStructuredOutput();
 updateCounts();
 setButtonsState();
 setActiveTab("input");

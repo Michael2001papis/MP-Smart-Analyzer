@@ -200,6 +200,12 @@ function labelSignals(signals, lang, max = 4) {
   return out;
 }
 
+/** Localized labels for UI signal chips (Output panel). */
+export function getSignalDisplayLabels(signals, lang, max = 14) {
+  const L = lang === "en" ? "en" : "he";
+  return labelSignals(signals, L, max);
+}
+
 function confTier(confidence, lang) {
   const c = typeof confidence === "number" ? confidence : 0;
   const pct = Math.round(c * 100);

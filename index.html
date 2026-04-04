@@ -10,8 +10,57 @@
     <meta name="color-scheme" content="dark" />
     <title>AI Research Console — MP Smart Analyzer</title>
     <link rel="stylesheet" href="style.css" />
+    <script>
+      (function () {
+        var K = "MP_CLIENT_GATE_V1";
+        var IDLE = 864e6;
+        try {
+          var raw = localStorage.getItem(K);
+          if (!raw) return;
+          var j = JSON.parse(raw);
+          if (typeof j.lastActivityAt === "number" && Date.now() - j.lastActivityAt <= IDLE) {
+            document.documentElement.classList.add("mp-session-ok", "mp-app-ready");
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body class="mode-youth quick-mode">
+    <div
+      id="clientGateRoot"
+      class="client-gate"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="clientGateTitle"
+    >
+      <div class="client-gate__card">
+        <div class="client-gate__brand" aria-hidden="true">MP</div>
+        <h1 class="client-gate__title" id="clientGateTitle">כניסה למערכת</h1>
+        <p class="client-gate__hint">הזן את הסיסמה שקיבלת · Enter your access password</p>
+        <form id="clientGateForm" class="client-gate__form" autocomplete="on">
+          <label class="client-gate__label" for="clientGatePassword">סיסמה</label>
+          <input
+            type="password"
+            id="clientGatePassword"
+            name="password"
+            class="client-gate__input"
+            autocomplete="current-password"
+            autocapitalize="off"
+            spellcheck="false"
+            required
+          />
+          <button type="submit" class="btn client-gate__submit" id="clientGateSubmit">כניסה</button>
+        </form>
+        <p
+          id="clientGateError"
+          class="client-gate__error"
+          role="alert"
+          hidden
+          data-msg-bad="סיסמה שגויה · Wrong password"
+        ></p>
+      </div>
+    </div>
+
     <main class="app app--arc">
       <!-- Layer 1 · CONTROL (compact) -->
       <header class="control-deck">
@@ -262,6 +311,6 @@
     </main>
 
     <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="app.js"></script>
+    <script type="module" src="bootstrap.js"></script>
   </body>
 </html>

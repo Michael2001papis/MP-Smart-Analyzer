@@ -54,6 +54,19 @@ body {
   background-image:
     radial-gradient(ellipse 120% 80% at 50% -20%, rgba(56, 180, 255, 0.08), transparent 50%),
     radial-gradient(ellipse 80% 50% at 100% 50%, rgba(139, 124, 255, 0.05), transparent 45%);
+  -webkit-tap-highlight-color: rgba(56, 180, 255, 0.12);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ——— Layout shell ——— */
@@ -61,7 +74,12 @@ body {
   max-width: 1280px;
   margin: 0 auto;
   padding: 20px 18px 28px;
+  padding-top: max(20px, env(safe-area-inset-top, 0px));
+  padding-inline-start: max(18px, env(safe-area-inset-left, 0px));
+  padding-inline-end: max(18px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(28px, env(safe-area-inset-bottom, 0px));
   min-height: 100%;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -80,6 +98,17 @@ body {
   border: 1px solid var(--border);
   background: rgba(0, 0, 0, 0.35);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  position: relative;
+  z-index: 2;
+}
+
+.control-deck__bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
 }
 
 .control-deck__brand {
@@ -115,6 +144,106 @@ body {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ——— Mobile hamburger (youth / neon) ——— */
+.menu-toggle {
+  display: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  background: linear-gradient(145deg, rgba(139, 124, 255, 0.35), rgba(56, 180, 255, 0.12));
+  box-shadow:
+    0 0 0 1px rgba(139, 124, 255, 0.45),
+    0 8px 28px rgba(0, 0, 0, 0.4),
+    0 0 32px rgba(139, 124, 255, 0.2);
+  color: var(--text);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.menu-toggle:active {
+  transform: scale(0.94);
+}
+
+.menu-toggle__glow {
+  position: absolute;
+  inset: 2px;
+  border-radius: 14px;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.12), transparent 55%);
+  pointer-events: none;
+}
+
+.menu-toggle__bars {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  height: 100%;
+}
+
+.menu-toggle__bar {
+  display: block;
+  width: 22px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #c8f4ff, var(--primary), var(--violet));
+  transition: transform 0.28s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.2s ease;
+  transform-origin: center;
+}
+
+body.menu-open .menu-toggle__bar:nth-child(1) {
+  transform: translateY(10px) rotate(45deg);
+}
+
+body.menu-open .menu-toggle__bar:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0.2);
+}
+
+body.menu-open .menu-toggle__bar:nth-child(3) {
+  transform: translateY(-10px) rotate(-45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-toggle__bar,
+  .menu-toggle {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.menu-backdrop {
+  display: none;
+}
+
+.mobile-fast-only-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--violet);
+  background: rgba(139, 124, 255, 0.12);
+  border: 1px solid rgba(139, 124, 255, 0.35);
+  box-shadow: 0 0 20px rgba(139, 124, 255, 0.15);
+  width: fit-content;
+}
+
+.viewport-mobile .exp-toggle--quick {
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
@@ -1259,9 +1388,9 @@ body.mode-youth .ws-panel {
 /* ——— Toast ——— */
 .toast {
   position: fixed;
-  bottom: 20px;
-  inset-inline-start: 20px;
-  z-index: 100;
+  bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  inset-inline-start: max(20px, env(safe-area-inset-left, 0px));
+  z-index: 250;
   padding: 12px 16px;
   border-radius: var(--radius-md);
   background: var(--bg-elevated);
@@ -1336,29 +1465,227 @@ body.quick-mode .chip.is-active {
   box-shadow: none;
 }
 
+/* Keep hamburger visible / fun even in quick mode (mobile youth cue). */
+body.quick-mode .menu-toggle {
+  transition-duration: 0.08s;
+}
+
+/* ——— Desktop · inline control bar (Rich mode available) ——— */
+@media (min-width: 960px) {
+  .control-deck__bar {
+    display: contents;
+  }
+
+  .menu-toggle {
+    display: none !important;
+  }
+
+  .menu-backdrop {
+    display: none !important;
+  }
+}
+
 /* ——— Responsive ——— */
-@media (max-width: 960px) {
+@media (max-width: 959px) {
   .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .intel-metrics {
     grid-template-columns: 1fr;
   }
 
   .control-deck {
     flex-direction: column;
     align-items: stretch;
+    gap: 0;
+    padding: 12px 14px;
+  }
+
+  .control-deck__bar {
+    display: flex;
+  }
+
+  .menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .menu-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 198;
+    background: rgba(2, 4, 14, 0.78);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.24s ease;
+  }
+
+  body.menu-open .menu-backdrop {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .control-deck__actions {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: min(100vw - 20px, 400px);
+    max-width: 94vw;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
     justify-content: flex-start;
+    gap: 18px;
+    padding: max(20px, env(safe-area-inset-top, 0px)) 20px max(28px, env(safe-area-inset-bottom, 0px));
+    margin: 0;
+    background: linear-gradient(165deg, rgba(22, 18, 48, 0.98) 0%, rgba(8, 10, 20, 0.99) 55%, rgba(6, 8, 14, 1) 100%);
+    border: 1px solid rgba(139, 124, 255, 0.28);
+    box-shadow:
+      -16px 0 56px rgba(0, 0, 0, 0.55),
+      0 0 80px rgba(139, 124, 255, 0.1);
+    z-index: 199;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    transition: transform 0.34s cubic-bezier(0.32, 0.72, 0, 1);
   }
 
-  .intel-metrics {
-    grid-template-columns: 1fr;
+  html[dir="ltr"] .control-deck__actions {
+    right: 0;
+    left: auto;
+    transform: translateX(105%);
+    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  }
+
+  html[dir="rtl"] .control-deck__actions {
+    left: 0;
+    right: auto;
+    transform: translateX(-105%);
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  }
+
+  body.menu-open .control-deck__actions {
+    transform: translateX(0);
+  }
+
+  .control-deck__actions .chip,
+  .control-deck__actions .btn-ghost {
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+
+  .control-deck__actions .chip--sm {
+    min-height: 48px;
+    padding-inline: 18px;
+  }
+
+  .control-deck__actions .ctrl-select--deck {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .control-deck__actions .ctrl-select--deck select {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .control-deck__actions .exp-toggle {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .control-deck__actions .exp-toggle-label {
+    font-size: 11px;
+  }
+
+  .control-deck__actions .sys-pill--deck {
+    align-self: flex-start;
+    padding: 10px 14px;
+    font-size: 11px;
+  }
+
+  .controls-dock {
+    position: sticky;
+    bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    margin-top: 12px;
+    z-index: 40;
+    padding: 14px 14px 16px;
+  }
+
+  .system-intelligence__inner {
+    padding: 14px 16px 16px;
+  }
+
+  .intel-brief-body {
+    max-height: min(52vh, 480px);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.mode-youth .ws-panel {
+    min-height: 0;
+  }
+
+  .btn-run {
+    width: 100%;
+    min-width: 0;
+    padding: 16px 20px;
+    font-size: 15px;
+  }
+
+  .app-status-row .status {
+    font-size: 13px;
+    padding: 4px 0;
+  }
+
+  .settings-fields select {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .secondary-actions .btn {
+    min-height: 48px;
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .chip {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@media (max-width: 959px) and (prefers-reduced-motion: reduce) {
+  .control-deck__actions,
+  .menu-backdrop {
+    transition-duration: 0.01ms !important;
   }
 }
 
 @media (max-width: 720px) {
   .tabs {
     display: flex;
+    gap: 10px;
+  }
+
+  .tab {
+    min-height: 52px;
+    font-size: 15px;
+    border-radius: 14px;
   }
 
   .workspace .ws-panel.is-hidden {
@@ -1367,7 +1694,13 @@ body.quick-mode .chip.is-active {
 
   .editor,
   .editor--output {
-    min-height: 220px;
+    min-height: 260px;
+    font-size: 16px;
+  }
+
+  .arc-badge {
+    font-size: 10px;
+    margin-bottom: 8px;
   }
 }
 

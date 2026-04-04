@@ -90,6 +90,10 @@ const els = {
   whyResultBlock: $("whyResultBlock"),
   whyResultSummary: $("whyResultSummary"),
   whyResultPre: $("whyResultPre"),
+  btnNavMenu: $("btnNavMenu"),
+  menuBackdrop: $("menuBackdrop"),
+  navMenuLabel: $("navMenuLabel"),
+  mobileFastOnlyBadge: $("mobileFastOnlyBadge"),
 };
 
 function requireEl(name, el) {
@@ -177,11 +181,22 @@ function assertRequiredEls() {
   requireEl("whyResultBlock", els.whyResultBlock);
   requireEl("whyResultSummary", els.whyResultSummary);
   requireEl("whyResultPre", els.whyResultPre);
+  requireEl("btnNavMenu", els.btnNavMenu);
+  requireEl("menuBackdrop", els.menuBackdrop);
+  requireEl("navMenuLabel", els.navMenuLabel);
+  requireEl("mobileFastOnlyBadge", els.mobileFastOnlyBadge);
 }
 
 const EXP_STORAGE_KEY = "MP_EXPERIENCE";
 const QUICK_STORAGE_KEY = "MP_QUICK_MODE";
 const PERSPECTIVE_STORAGE_KEY = "MP_PERSPECTIVE";
+
+/** Desktop breakpoint: Rich mode + inline control bar (matches CSS). */
+const DESKTOP_MIN_WIDTH = 960;
+const mqDesktop = window.matchMedia(`(min-width: ${DESKTOP_MIN_WIDTH}px)`);
+
+/** When true, Rich UI is locked off (phone / narrow viewport). */
+let mobileQuickLock = false;
 
 /** @type {"internal"|"external"|"neutral"} */
 let currentPerspective = "neutral";
@@ -285,6 +300,9 @@ Backend: Express + MongoDB
     medium: "בינוני",
     long: "ארוך",
     intelBriefKicker: "קריאת מערכת",
+    navMenuOpen: "פתח תפריט",
+    navMenuClose: "סגור תפריט",
+    mobileFastOnlyNote: "מובייל · מהיר בלבד",
   },
   en: {
     analyze: "Run Analysis",
@@ -384,6 +402,9 @@ Goal: client demo this week`,
     medium: "Medium",
     long: "Long",
     intelBriefKicker: "Interpretation layer · before output",
+    navMenuOpen: "Open menu",
+    navMenuClose: "Close menu",
+    mobileFastOnlyNote: "Phone · quick only",
   },
 };
 
@@ -704,15 +725,73 @@ function isQuickMode() {
 function applyQuickMode(quick) {
   const on = Boolean(quick);
   document.body.classList.toggle("quick-mode", on);
-  try {
-    localStorage.setItem(QUICK_STORAGE_KEY, on ? "1" : "0");
-  } catch {
-    /* ignore */
+  if (!mobileQuickLock) {
+    try {
+      localStorage.setItem(QUICK_STORAGE_KEY, on ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
   }
   els.btnModeQuick.classList.toggle("is-active", on);
   els.btnModeRich.classList.toggle("is-active", !on);
   els.btnModeQuick.setAttribute("aria-pressed", on ? "true" : "false");
   els.btnModeRich.setAttribute("aria-pressed", on ? "false" : "true");
+}
+
+function isDesktopViewport() {
+  return mqDesktop.matches;
+}
+
+function closeNavMenu() {
+  document.body.classList.remove("menu-open");
+  if (els.menuBackdrop) els.menuBackdrop.hidden = true;
+  if (els.btnNavMenu) {
+    els.btnNavMenu.setAttribute("aria-expanded", "false");
+    const s = STRINGS[els.lang.value] || STRINGS.he;
+    els.navMenuLabel.textContent = s.navMenuOpen;
+  }
+  document.body.style.overflow = "";
+}
+
+function openNavMenu() {
+  if (isDesktopViewport()) return;
+  document.body.classList.add("menu-open");
+  if (els.menuBackdrop) els.menuBackdrop.hidden = false;
+  if (els.btnNavMenu) {
+    els.btnNavMenu.setAttribute("aria-expanded", "true");
+    const s = STRINGS[els.lang.value] || STRINGS.he;
+    els.navMenuLabel.textContent = s.navMenuClose;
+  }
+  document.body.style.overflow = "hidden";
+}
+
+function toggleNavMenu() {
+  if (isDesktopViewport()) return;
+  if (document.body.classList.contains("menu-open")) closeNavMenu();
+  else openNavMenu();
+}
+
+/** Narrow viewport: hamburger drawer, force quick mode, hide Rich. */
+function syncViewportChrome() {
+  const desktop = isDesktopViewport();
+  document.body.classList.toggle("viewport-mobile", !desktop);
+  document.body.classList.toggle("viewport-desktop", desktop);
+
+  if (!desktop) {
+    mobileQuickLock = true;
+    applyQuickMode(true);
+    els.btnModeRich.hidden = true;
+    els.btnModeRich.setAttribute("tabindex", "-1");
+    els.mobileFastOnlyBadge.hidden = false;
+  } else {
+    mobileQuickLock = false;
+    els.btnModeRich.hidden = false;
+    els.btnModeRich.removeAttribute("tabindex");
+    els.mobileFastOnlyBadge.hidden = true;
+    applyQuickMode(readQuickMode());
+  }
+
+  closeNavMenu();
 }
 
 function readPerspective() {
@@ -848,6 +927,8 @@ function applyLanguageUI() {
   els.btnPerspectiveInternal.title = s.perspectiveInternalHint || "";
   els.btnPerspectiveExternal.title = "";
   els.btnPerspectiveNeutral.title = "";
+  els.navMenuLabel.textContent = document.body.classList.contains("menu-open") ? s.navMenuClose : s.navMenuOpen;
+  els.mobileFastOnlyBadge.textContent = s.mobileFastOnlyNote;
   els.uiLangLabel.textContent = s.uiLangLabel;
   els.lblOutputLang.textContent = s.lblOutputLang;
   els.lblOutputType.textContent = s.lblOutputType;
@@ -1026,7 +1107,10 @@ function analyze() {
   }
 }
 
-els.btnAnalyze.addEventListener("click", analyze);
+els.btnAnalyze.addEventListener("click", () => {
+  analyze();
+  closeNavMenu();
+});
 
 els.btnClear.addEventListener("click", () => {
   els.report.value = "";
@@ -1039,6 +1123,7 @@ els.btnClear.addEventListener("click", () => {
   setStatus("", "info");
   updateCounts();
   setButtonsState();
+  closeNavMenu();
 });
 
 els.btnSample.addEventListener("click", () => {
@@ -1047,6 +1132,7 @@ els.btnSample.addEventListener("click", () => {
   setPanelsState({ input: "normal", output: "normal", intel: "normal" });
   setStatus("", "info");
   setActiveTab("input");
+  closeNavMenu();
 });
 
 els.btnCopy.addEventListener("click", async () => {
@@ -1091,14 +1177,31 @@ window.addEventListener("resize", () => {
   if (resizeRaf) cancelAnimationFrame(resizeRaf);
   resizeRaf = requestAnimationFrame(() => {
     resizeRaf = null;
+    syncViewportChrome();
     setActiveTab("input");
   });
+});
+
+mqDesktop.addEventListener("change", () => {
+  syncViewportChrome();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.body.classList.contains("menu-open")) {
+    e.preventDefault();
+    closeNavMenu();
+  }
 });
 
 els.btnModeYouth.addEventListener("click", () => applyExperienceMode("youth"));
 els.btnModePro.addEventListener("click", () => applyExperienceMode("pro"));
 els.btnModeQuick.addEventListener("click", () => applyQuickMode(true));
-els.btnModeRich.addEventListener("click", () => applyQuickMode(false));
+els.btnModeRich.addEventListener("click", () => {
+  if (mobileQuickLock) return;
+  applyQuickMode(false);
+});
+els.btnNavMenu.addEventListener("click", () => toggleNavMenu());
+els.menuBackdrop.addEventListener("click", () => closeNavMenu());
 els.btnPerspectiveInternal.addEventListener("click", () => applyPerspective("internal"));
 els.btnPerspectiveExternal.addEventListener("click", () => applyPerspective("external"));
 els.btnPerspectiveNeutral.addEventListener("click", () => applyPerspective("neutral"));
@@ -1116,7 +1219,7 @@ try {
   }
 }
 applyExperienceMode(readExperienceMode());
-applyQuickMode(readQuickMode());
+syncViewportChrome();
 applyLanguageUI();
 setOutputInsights(null, null, null);
 setIntelBrief("");

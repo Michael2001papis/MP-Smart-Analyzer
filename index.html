@@ -2,7 +2,12 @@
 <html lang="he" dir="rtl">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5"
+    />
+    <meta name="theme-color" content="#050508" />
+    <meta name="color-scheme" content="dark" />
     <title>AI Research Console — MP Smart Analyzer</title>
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -10,14 +15,32 @@
     <main class="app app--arc">
       <!-- Layer 1 · CONTROL (compact) -->
       <header class="control-deck">
-        <div class="control-deck__brand">
-          <div class="logo-mark logo-mark--sm" aria-hidden="true">MP</div>
-          <div class="control-deck__titles">
-            <span class="product-name--compact">MP Smart Analyzer</span>
-            <span class="product-tag--compact" id="productTagline"></span>
+        <div class="control-deck__bar">
+          <div class="control-deck__brand">
+            <div class="logo-mark logo-mark--sm" aria-hidden="true">MP</div>
+            <div class="control-deck__titles">
+              <span class="product-name--compact">MP Smart Analyzer</span>
+              <span class="product-tag--compact" id="productTagline"></span>
+            </div>
           </div>
+          <button
+            type="button"
+            class="menu-toggle"
+            id="btnNavMenu"
+            aria-expanded="false"
+            aria-controls="deckActions"
+          >
+            <span class="visually-hidden" id="navMenuLabel"></span>
+            <span class="menu-toggle__glow" aria-hidden="true"></span>
+            <span class="menu-toggle__bars" aria-hidden="true">
+              <span class="menu-toggle__bar"></span>
+              <span class="menu-toggle__bar"></span>
+              <span class="menu-toggle__bar"></span>
+            </span>
+          </button>
         </div>
-        <div class="control-deck__actions">
+        <div class="menu-backdrop" id="menuBackdrop" hidden></div>
+        <div class="control-deck__actions" id="deckActions">
           <div class="sys-pill sys-pill--deck" aria-live="polite">
             <span class="sys-dot" aria-hidden="true"></span>
             <span id="systemStatusText"></span>
@@ -27,10 +50,11 @@
             <button type="button" class="chip chip--sm" id="btnModeYouth" aria-pressed="true"></button>
             <button type="button" class="chip chip--sm" id="btnModePro" aria-pressed="false"></button>
           </div>
-          <div class="exp-toggle exp-toggle--tight" role="group" aria-labelledby="quickModeLabel">
+          <div class="exp-toggle exp-toggle--tight exp-toggle--quick" role="group" aria-labelledby="quickModeLabel">
             <span class="exp-toggle-label" id="quickModeLabel"></span>
             <button type="button" class="chip chip--sm is-active" id="btnModeQuick" aria-pressed="true"></button>
             <button type="button" class="chip chip--sm" id="btnModeRich" aria-pressed="false"></button>
+            <span class="mobile-fast-only-badge" id="mobileFastOnlyBadge" hidden></span>
           </div>
           <label class="ctrl-select ctrl-select--deck">
             <span id="uiLangLabel"></span>

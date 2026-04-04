@@ -148,7 +148,17 @@
       <section class="controls-dock" aria-labelledby="settingsBarLabel">
         <div class="controls-dock-inner">
           <div class="settings-row">
-            <span class="settings-kicker" id="settingsBarLabel"></span>
+            <div class="settings-head">
+              <span class="settings-kicker" id="settingsBarLabel"></span>
+              <div class="perspective-block" role="group" aria-labelledby="perspectiveLabel">
+                <span class="perspective-label-text" id="perspectiveLabel"></span>
+                <div class="exp-toggle exp-toggle--compact" role="presentation">
+                  <button type="button" class="chip" id="btnPerspectiveInternal" aria-pressed="false"></button>
+                  <button type="button" class="chip" id="btnPerspectiveExternal" aria-pressed="false"></button>
+                  <button type="button" class="chip" id="btnPerspectiveNeutral" aria-pressed="true"></button>
+                </div>
+              </div>
+            </div>
             <div class="settings-fields">
               <label class="ctrl-select ctrl-select--grow">
                 <span id="lblOutputLang"></span>

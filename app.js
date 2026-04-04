@@ -57,6 +57,10 @@ const els = {
   guide3: $("guide3"),
   guide4: $("guide4"),
   settingsBarLabel: $("settingsBarLabel"),
+  perspectiveLabel: $("perspectiveLabel"),
+  btnPerspectiveInternal: $("btnPerspectiveInternal"),
+  btnPerspectiveExternal: $("btnPerspectiveExternal"),
+  btnPerspectiveNeutral: $("btnPerspectiveNeutral"),
   lblOutputLang: $("lblOutputLang"),
   lblOutputType: $("lblOutputType"),
   lblTone: $("lblTone"),
@@ -126,6 +130,10 @@ function assertRequiredEls() {
   requireEl("guide3", els.guide3);
   requireEl("guide4", els.guide4);
   requireEl("settingsBarLabel", els.settingsBarLabel);
+  requireEl("perspectiveLabel", els.perspectiveLabel);
+  requireEl("btnPerspectiveInternal", els.btnPerspectiveInternal);
+  requireEl("btnPerspectiveExternal", els.btnPerspectiveExternal);
+  requireEl("btnPerspectiveNeutral", els.btnPerspectiveNeutral);
   requireEl("lblOutputLang", els.lblOutputLang);
   requireEl("lblOutputType", els.lblOutputType);
   requireEl("lblTone", els.lblTone);
@@ -140,6 +148,10 @@ function assertRequiredEls() {
 
 const EXP_STORAGE_KEY = "MP_EXPERIENCE";
 const QUICK_STORAGE_KEY = "MP_QUICK_MODE";
+const PERSPECTIVE_STORAGE_KEY = "MP_PERSPECTIVE";
+
+/** @type {"internal"|"external"|"neutral"} */
+let currentPerspective = "neutral";
 
 const STRINGS = {
   he: {
@@ -172,6 +184,10 @@ const STRINGS = {
     inputHintTip:
       "טיפ: ככל שיש בדוח סטאק, בעיות מפורטות (כרשימה) ומטרה ברורה — הניתוח והפלט יהיו מדויקים ורלוונטיים יותר.",
     settingsBar: "הגדרות מערכת",
+    perspectiveLabel: "מבט",
+    perspectiveInternal: "פנימי",
+    perspectiveExternal: "חיצוני",
+    perspectiveNeutral: "נטרלי",
     uiLangLabel: "ממשק",
     lblOutputLang: "שפת פלט",
     lblOutputType: "סוג פלט",
@@ -251,6 +267,10 @@ Backend: Express + MongoDB
     inputHintTip:
       "Tip: the more you include stack, bullet-point issues, and a clear goal, the sharper and more relevant the output.",
     settingsBar: "System settings",
+    perspectiveLabel: "Lens",
+    perspectiveInternal: "Internal",
+    perspectiveExternal: "External",
+    perspectiveNeutral: "Neutral",
     uiLangLabel: "UI",
     lblOutputLang: "Output language",
     lblOutputType: "Output type",
@@ -586,6 +606,38 @@ function applyQuickMode(quick) {
   els.btnModeRich.setAttribute("aria-pressed", on ? "false" : "true");
 }
 
+function readPerspective() {
+  try {
+    const v = localStorage.getItem(PERSPECTIVE_STORAGE_KEY);
+    if (v === "internal" || v === "external" || v === "neutral") return v;
+  } catch {
+    /* ignore */
+  }
+  return "neutral";
+}
+
+function getPerspective() {
+  return currentPerspective;
+}
+
+function applyPerspective(mode) {
+  const m = mode === "internal" || mode === "external" || mode === "neutral" ? mode : "neutral";
+  currentPerspective = m;
+  document.body.classList.remove("perspective-internal", "perspective-external", "perspective-neutral");
+  document.body.classList.add(`perspective-${m}`);
+  try {
+    localStorage.setItem(PERSPECTIVE_STORAGE_KEY, m);
+  } catch {
+    /* ignore */
+  }
+  els.btnPerspectiveInternal.classList.toggle("is-active", m === "internal");
+  els.btnPerspectiveExternal.classList.toggle("is-active", m === "external");
+  els.btnPerspectiveNeutral.classList.toggle("is-active", m === "neutral");
+  els.btnPerspectiveInternal.setAttribute("aria-pressed", m === "internal" ? "true" : "false");
+  els.btnPerspectiveExternal.setAttribute("aria-pressed", m === "external" ? "true" : "false");
+  els.btnPerspectiveNeutral.setAttribute("aria-pressed", m === "neutral" ? "true" : "false");
+}
+
 function setActiveTab(which) {
   const isMobile = window.matchMedia("(max-width: 720px)").matches;
   if (!isMobile) {
@@ -671,6 +723,10 @@ function applyLanguageUI() {
   els.guide3.textContent = s.guide3;
   els.guide4.textContent = s.guide4;
   els.settingsBarLabel.textContent = s.settingsBar;
+  els.perspectiveLabel.textContent = s.perspectiveLabel;
+  els.btnPerspectiveInternal.textContent = s.perspectiveInternal;
+  els.btnPerspectiveExternal.textContent = s.perspectiveExternal;
+  els.btnPerspectiveNeutral.textContent = s.perspectiveNeutral;
   els.uiLangLabel.textContent = s.uiLangLabel;
   els.lblOutputLang.textContent = s.lblOutputLang;
   els.lblOutputType.textContent = s.lblOutputType;
@@ -728,6 +784,7 @@ function applyLanguageUI() {
 
   updateCounts();
   setButtonsState();
+  applyPerspective(readPerspective());
 }
 
 function analyze() {
@@ -758,6 +815,7 @@ function analyze() {
         reportLength: reportText.length,
         lang,
         tone,
+        perspective: getPerspective(),
       });
     }
 
@@ -792,6 +850,7 @@ function analyze() {
       facts: res.analysis.facts,
       inputQuality: res.quality,
       rejectedInput: Boolean(res.isRejectedInput),
+      perspective: getPerspective(),
     });
 
     if (res.isRejectedInput) {
@@ -894,6 +953,9 @@ els.btnModeYouth.addEventListener("click", () => applyExperienceMode("youth"));
 els.btnModePro.addEventListener("click", () => applyExperienceMode("pro"));
 els.btnModeQuick.addEventListener("click", () => applyQuickMode(true));
 els.btnModeRich.addEventListener("click", () => applyQuickMode(false));
+els.btnPerspectiveInternal.addEventListener("click", () => applyPerspective("internal"));
+els.btnPerspectiveExternal.addEventListener("click", () => applyPerspective("external"));
+els.btnPerspectiveNeutral.addEventListener("click", () => applyPerspective("neutral"));
 
 // Initial state
 try {

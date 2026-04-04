@@ -6,7 +6,7 @@
     <title>MP Smart Analyzer</title>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body class="mode-youth">
+  <body class="mode-youth quick-mode">
     <main class="app">
       <!-- 1 · Header -->
       <header class="app-header">
@@ -26,6 +26,11 @@
             <span class="exp-toggle-label" id="expModeLabel"></span>
             <button type="button" class="chip" id="btnModeYouth" aria-pressed="true"></button>
             <button type="button" class="chip" id="btnModePro" aria-pressed="false"></button>
+          </div>
+          <div class="exp-toggle" role="group" aria-labelledby="quickModeLabel">
+            <span class="exp-toggle-label" id="quickModeLabel"></span>
+            <button type="button" class="chip is-active" id="btnModeQuick" aria-pressed="true"></button>
+            <button type="button" class="chip" id="btnModeRich" aria-pressed="false"></button>
           </div>
           <label class="ctrl-select">
             <span id="uiLangLabel"></span>
@@ -115,6 +120,13 @@
             <span id="templateLineKey"></span>:
             <strong id="templateLineTitle">—</strong>
           </p>
+
+          <section class="intel-brief" id="intelBrief" hidden aria-labelledby="intelBriefKicker">
+            <div class="intel-brief-head">
+              <span class="intel-brief-kicker" id="intelBriefKicker"></span>
+            </div>
+            <pre class="intel-brief-body" id="intelBriefBody"></pre>
+          </section>
 
           <div class="editor-frame editor-frame--readonly">
             <textarea id="output" class="editor editor--output" readonly aria-label="Analysis output"></textarea>

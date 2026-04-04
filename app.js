@@ -1,5 +1,6 @@
 import { decide, evaluateRules, pickTemplate, normalize, assessReportUsability } from "./rules.js";
 import { getTemplates, getInvalidInputMarkdown } from "./templates.js";
+import { buildIntelBriefMarkdown, getInputTypeLabel } from "./intelLayer.js";
 
 const $ = (id) => document.getElementById(id);
 const DEBUG = new URLSearchParams(window.location.search).has("debug");
@@ -38,6 +39,9 @@ const els = {
   expModeLabel: $("expModeLabel"),
   btnModeYouth: $("btnModeYouth"),
   btnModePro: $("btnModePro"),
+  quickModeLabel: $("quickModeLabel"),
+  btnModeQuick: $("btnModeQuick"),
+  btnModeRich: $("btnModeRich"),
   inputKicker: $("inputKicker"),
   outputKicker: $("outputKicker"),
   step1: $("step1"),
@@ -60,6 +64,9 @@ const els = {
   debugSummary: $("debugSummary"),
   footerLegal: $("footerLegal"),
   footerNote: $("footerNote"),
+  intelBrief: $("intelBrief"),
+  intelBriefKicker: $("intelBriefKicker"),
+  intelBriefBody: $("intelBriefBody"),
 };
 
 function requireEl(name, el) {
@@ -101,6 +108,9 @@ function assertRequiredEls() {
   requireEl("expModeLabel", els.expModeLabel);
   requireEl("btnModeYouth", els.btnModeYouth);
   requireEl("btnModePro", els.btnModePro);
+  requireEl("quickModeLabel", els.quickModeLabel);
+  requireEl("btnModeQuick", els.btnModeQuick);
+  requireEl("btnModeRich", els.btnModeRich);
   requireEl("inputKicker", els.inputKicker);
   requireEl("outputKicker", els.outputKicker);
   requireEl("step1", els.step1);
@@ -123,14 +133,17 @@ function assertRequiredEls() {
   requireEl("debugSummary", els.debugSummary);
   requireEl("footerLegal", els.footerLegal);
   requireEl("footerNote", els.footerNote);
+  requireEl("intelBrief", els.intelBrief);
+  requireEl("intelBriefKicker", els.intelBriefKicker);
+  requireEl("intelBriefBody", els.intelBriefBody);
 }
 
 const EXP_STORAGE_KEY = "MP_EXPERIENCE";
+const QUICK_STORAGE_KEY = "MP_QUICK_MODE";
 
 const STRINGS = {
   he: {
     analyze: "הרץ ניתוח",
-    analyzing: "מנתח…",
     sample: "טען דוגמה",
     clear: "נקה",
     copy: "העתק",
@@ -146,6 +159,9 @@ const STRINGS = {
     expModeLabel: "מצב",
     modeYouth: "נוער",
     modePro: "בוגרים",
+    quickModeLabel: "תגובה",
+    modeQuick: "מהיר",
+    modeRich: "עשיר",
     inputKicker: "נתונים",
     outputKicker: "פלט",
     step1: "הדבק דוח",
@@ -203,10 +219,10 @@ Backend: Express + MongoDB
     short: "קצר",
     medium: "בינוני",
     long: "ארוך",
+    intelBriefKicker: "שכבת הבנה · לפני הפלט",
   },
   en: {
     analyze: "Run Analysis",
-    analyzing: "Analyzing…",
     sample: "Load sample",
     clear: "Clear",
     copy: "Copy",
@@ -222,6 +238,9 @@ Backend: Express + MongoDB
     expModeLabel: "Mode",
     modeYouth: "Youth",
     modePro: "Pro",
+    quickModeLabel: "Response",
+    modeQuick: "Quick",
+    modeRich: "Rich",
     inputKicker: "Data",
     outputKicker: "Output",
     step1: "Paste your report",
@@ -279,31 +298,9 @@ Goal: client demo this week`,
     short: "Short",
     medium: "Medium",
     long: "Long",
+    intelBriefKicker: "Interpretation layer · before output",
   },
 };
-
-function detectedModeLabel(inputType, lang) {
-  const map = {
-    he: {
-      qa: "צ׳ק־ליסט / QA",
-      bug_report: "באגים / יציבות",
-      ui_audit: "ממשק / UX",
-      status_report: "סטטוס / מסירה",
-      free_text: "כללי / לא מסווג",
-      invalid_input: "קלט לא תקף",
-    },
-    en: {
-      qa: "Checklist / QA",
-      bug_report: "Bugs / stability",
-      ui_audit: "UI / UX",
-      status_report: "Status / delivery",
-      free_text: "General / unclassified",
-      invalid_input: "Invalid input",
-    },
-  };
-  const row = map[lang] || map.he;
-  return row[inputType] || row.free_text;
-}
 
 function sampleReport() {
   return `
@@ -452,7 +449,7 @@ function setOutputInsights(inputType, templateTitle, confidence) {
   els.templateLineKey.textContent = s.templateLineKey;
 
   if (inputType) {
-    els.pillDetectedVal.textContent = detectedModeLabel(inputType, lang);
+    els.pillDetectedVal.textContent = getInputTypeLabel(inputType, lang);
   } else {
     els.pillDetectedVal.textContent = "—";
   }
@@ -515,13 +512,34 @@ function setStatus(message, kind = "info") {
   if (kind === "success") els.status.classList.add("is-success");
 }
 
+function setIntelBrief(markdown) {
+  const raw = typeof markdown === "string" ? markdown : "";
+  const text = raw.trim();
+  if (!text) {
+    els.intelBrief.hidden = true;
+    els.intelBriefBody.textContent = "";
+    return;
+  }
+  els.intelBrief.hidden = false;
+  els.intelBriefBody.textContent = raw;
+}
+
+function composedExportBody() {
+  const core = (els.output.value || "").trim();
+  const intel = (els.intelBriefBody.textContent || "").trim();
+  if (!core) return "";
+  if (!intel || els.intelBrief.hidden) return core;
+  return `${intel}\n\n---\n\n${core}`;
+}
+
 let toastTimer = null;
 function showToast(message) {
   if (!message) return;
   els.toast.textContent = message;
   els.toast.classList.add("is-visible");
   if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => els.toast.classList.remove("is-visible"), 1200);
+  const ms = isQuickMode() ? 700 : 1200;
+  toastTimer = setTimeout(() => els.toast.classList.remove("is-visible"), ms);
 }
 
 function setPanelsState({ input = "normal", output = "normal" } = {}) {
@@ -539,63 +557,33 @@ function setButtonsState() {
   els.btnDownload.disabled = !hasOutput;
 }
 
-let outputAnimToken = 0;
-function shouldReduceMotion() {
-  return Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+function readQuickMode() {
+  try {
+    const v = localStorage.getItem(QUICK_STORAGE_KEY);
+    if (v === "0") return false;
+    if (v === "1") return true;
+  } catch {
+    /* ignore */
+  }
+  return true;
 }
 
-async function typeOutput(text) {
-  const token = ++outputAnimToken;
+function isQuickMode() {
+  return document.body.classList.contains("quick-mode");
+}
 
-  const full = typeof text === "string" ? text : String(text ?? "");
-  const reduce = shouldReduceMotion();
-  const longText = full.length > 6000;
-
-  // If user prefers reduced motion (or it's huge), render instantly.
-  if (reduce || longText) {
-    els.output.value = full;
-    setButtonsState();
-    return;
+function applyQuickMode(quick) {
+  const on = Boolean(quick);
+  document.body.classList.toggle("quick-mode", on);
+  try {
+    localStorage.setItem(QUICK_STORAGE_KEY, on ? "1" : "0");
+  } catch {
+    /* ignore */
   }
-
-  // During animation: keep actions disabled until content exists.
-  els.output.value = "";
-  setButtonsState();
-
-  const total = full.length;
-  // Paragraph-aware speed: more paragraphs => faster typing.
-  const paragraphs = Math.max(
-    1,
-    full
-      .split(/\n\s*\n/g)
-      .map((p) => p.trim())
-      .filter(Boolean).length
-  );
-
-  // Base speed by length (smooth for short outputs).
-  let chunk = total > 2500 ? 24 : total > 1200 ? 14 : 8;
-  let delayMs = total > 2500 ? 6 : total > 1200 ? 10 : 14;
-
-  // Speed boost factor: 1..3 based on paragraph count.
-  // 1-2 paragraphs: normal
-  // 3-6 paragraphs: faster
-  // 7+ paragraphs: fastest
-  const speedFactor = paragraphs >= 7 ? 3 : paragraphs >= 3 ? 2 : 1;
-  chunk = Math.min(48, Math.round(chunk * speedFactor));
-  delayMs = Math.max(4, Math.round(delayMs / speedFactor));
-
-  for (let i = 0; i < total; i += chunk) {
-    if (token !== outputAnimToken) return; // cancelled by a new analysis
-    els.output.value = full.slice(0, i + chunk);
-    setButtonsState();
-    await new Promise((r) => setTimeout(r, delayMs));
-  }
-
-  // Ensure final text is exact.
-  if (token === outputAnimToken) {
-    els.output.value = full;
-    setButtonsState();
-  }
+  els.btnModeQuick.classList.toggle("is-active", on);
+  els.btnModeRich.classList.toggle("is-active", !on);
+  els.btnModeQuick.setAttribute("aria-pressed", on ? "true" : "false");
+  els.btnModeRich.setAttribute("aria-pressed", on ? "false" : "true");
 }
 
 function setActiveTab(which) {
@@ -665,6 +653,9 @@ function applyLanguageUI() {
   els.expModeLabel.textContent = s.expModeLabel;
   els.btnModeYouth.textContent = s.modeYouth;
   els.btnModePro.textContent = s.modePro;
+  els.quickModeLabel.textContent = s.quickModeLabel;
+  els.btnModeQuick.textContent = s.modeQuick;
+  els.btnModeRich.textContent = s.modeRich;
   els.inputKicker.textContent = s.inputKicker;
   els.outputKicker.textContent = s.outputKicker;
   els.step1.textContent = s.step1;
@@ -688,6 +679,7 @@ function applyLanguageUI() {
   els.report.placeholder = s.placeholderReport;
   els.footerLegal.textContent = s.footerLegal;
   els.footerNote.textContent = s.footerNote;
+  els.intelBriefKicker.textContent = s.intelBriefKicker;
 
   els.pillDetectedKey.textContent = s.detectedKey;
   els.pillConfidenceKey.textContent = s.confidenceKey;
@@ -738,14 +730,16 @@ function applyLanguageUI() {
   setButtonsState();
 }
 
-async function analyze() {
+function analyze() {
   const reportText = els.report.value || "";
   const lang = els.lang.value;
   const tone = els.tone.value;
   const s = STRINGS[lang] || STRINGS.he;
+  const quick = isQuickMode();
 
   if (!reportText.trim()) {
     els.output.value = "";
+    setIntelBrief("");
     setOutputInsights(null, null, null);
     els.debug.textContent = "";
     setPanelsState({ input: "error", output: "normal" });
@@ -755,14 +749,7 @@ async function analyze() {
     return;
   }
 
-  // Loading micro-feedback (subtle, deterministic)
-  els.btnAnalyze.classList.add("btn-loading");
-  els.btnAnalyze.disabled = true;
-  els.btnAnalyze.textContent = s.analyzing;
-  setStatus(s.analyzing, "info");
   setPanelsState({ input: "normal", output: "normal" });
-  // Cancel any previous output animation.
-  outputAnimToken++;
 
   try {
     if (DEBUG) {
@@ -774,11 +761,14 @@ async function analyze() {
       });
     }
 
-    await new Promise((r) => setTimeout(r, 650));
-
     const res = computeResponse(reportText, lang, tone);
     const markdown = typeof res.markdown === "string" ? res.markdown : String(res.markdown ?? "");
-    await typeOutput(markdown);
+
+    els.output.value = markdown;
+    setButtonsState();
+
+    const experienceMode = document.body.classList.contains("mode-pro") ? "pro" : "youth";
+    setIntelBrief(buildIntelBriefMarkdown(res, reportText, { experienceMode }));
 
     if (DEBUG) {
       console.log("analyze_result", res);
@@ -811,15 +801,16 @@ async function analyze() {
     } else {
       setPanelsState({ input: "success", output: "success" });
       els.panelOutput.classList.remove("flash");
-      void els.panelOutput.offsetWidth;
-      els.panelOutput.classList.add("flash");
+      if (!quick) {
+        void els.panelOutput.offsetWidth;
+        els.panelOutput.classList.add("flash");
+      }
       setStatus(s.analyzeComplete, "success");
     }
   } catch (err) {
     const msg = err && err.message ? err.message : String(err);
     console.error("analyze_failed", err);
-    // Cancel any in-progress typing and show error immediately.
-    outputAnimToken++;
+    setIntelBrief("");
     els.output.value = lang === "en" ? `Analysis failed: ${msg}` : `הניתוח נכשל: ${msg}`;
     els.debug.textContent = DEBUG
       ? (err && err.stack ? String(err.stack) : msg)
@@ -828,11 +819,6 @@ async function analyze() {
     setPanelsState({ input: "normal", output: "error" });
     setStatus(lang === "en" ? "Analysis failed. Check debug/console." : "הניתוח נכשל. בדוק debug/console.", "error");
     setButtonsState();
-  } finally {
-    // Restore analyze button
-    els.btnAnalyze.classList.remove("btn-loading");
-    els.btnAnalyze.disabled = false;
-    els.btnAnalyze.textContent = s.analyze;
   }
 }
 
@@ -841,6 +827,7 @@ els.btnAnalyze.addEventListener("click", analyze);
 els.btnClear.addEventListener("click", () => {
   els.report.value = "";
   els.output.value = "";
+  setIntelBrief("");
   els.debug.textContent = "";
   setOutputInsights(null, null, null);
   setPanelsState({ input: "normal", output: "normal" });
@@ -859,38 +846,29 @@ els.btnSample.addEventListener("click", () => {
 
 els.btnCopy.addEventListener("click", async () => {
   const s = STRINGS[els.lang.value] || STRINGS.he;
-  const text = els.output.value || "";
+  const text = composedExportBody();
   if (!text.trim()) return;
   await copyToClipboard(text);
   showToast(s.copied);
 });
 
 els.btnDownload.addEventListener("click", () => {
-  const content = els.output.value || "";
+  const content = composedExportBody();
   if (!content.trim()) return;
   downloadMarkdown(`mp-smart-analysis_${nowStamp()}.md`, content);
 });
 
-// Auto-analyze on settings change (lightweight)
 els.lang.addEventListener("change", () => {
   applyLanguageUI();
-  // keep current output but update pills prefixes
-  const current = els.output.value || "";
-  if (current.trim()) analyze();
 });
 els.tone.addEventListener("change", () => {
-  const current = els.report.value || "";
-  if (current.trim()) analyze();
+  applyLanguageUI();
 });
 els.outputLang.addEventListener("change", () => {
   applyLanguageUI();
-  const current = els.report.value || "";
-  if (current.trim()) analyze();
 });
 els.outputType.addEventListener("change", () => {
   applyLanguageUI();
-  const current = els.report.value || "";
-  if (current.trim()) analyze();
 });
 
 els.report.addEventListener("input", () => {
@@ -903,10 +881,19 @@ els.report.addEventListener("input", () => {
 
 els.tabInput.addEventListener("click", () => setActiveTab("input"));
 els.tabOutput.addEventListener("click", () => setActiveTab("output"));
-window.addEventListener("resize", () => setActiveTab("input"));
+let resizeRaf = null;
+window.addEventListener("resize", () => {
+  if (resizeRaf) cancelAnimationFrame(resizeRaf);
+  resizeRaf = requestAnimationFrame(() => {
+    resizeRaf = null;
+    setActiveTab("input");
+  });
+});
 
 els.btnModeYouth.addEventListener("click", () => applyExperienceMode("youth"));
 els.btnModePro.addEventListener("click", () => applyExperienceMode("pro"));
+els.btnModeQuick.addEventListener("click", () => applyQuickMode(true));
+els.btnModeRich.addEventListener("click", () => applyQuickMode(false));
 
 // Initial state
 try {
@@ -921,6 +908,7 @@ try {
   }
 }
 applyExperienceMode(readExperienceMode());
+applyQuickMode(readQuickMode());
 applyLanguageUI();
 setOutputInsights(null, null, null);
 updateCounts();

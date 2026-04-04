@@ -111,6 +111,15 @@ test("assessReportUsability accepts stack-like report", () => {
   assert.equal(u.level, "ok");
 });
 
+test("Hebrew product-style brief matches intent rule and passes usability", () => {
+  const raw = "אני רוצה אתר חלל מקצועי + יכולות + עיצוב";
+  const n = normalize(raw);
+  const a = evaluateRules(raw);
+  assert.ok(a.matchedRules.includes("product_brief_intent"));
+  const u = assessReportUsability(raw, n, a);
+  assert.equal(u.level, "ok");
+});
+
 test("assessReportUsability allows very short text when rules already matched", () => {
   const raw = "react 500 jwt";
   const n = normalize(raw);

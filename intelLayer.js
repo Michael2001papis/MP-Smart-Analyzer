@@ -91,6 +91,9 @@ const T = {
     l4: "### 4) כיוון מומלץ",
     l5: "### 5) פלט מסודר",
     l5Body: "המשך המסמך למטה הוא הפלט המלא מהמנוע (תבנית + כללים).",
+    l5BodyMinimalInternal:
+      "במצב **מבט פנימי** החלון הראשי מציג מעטפת חיצונית בלבד. גוף הפלט המלא מהמנוע (פנימי) מופיע בסוף בלוק זה.",
+    fullEngineHeader: "### גוף מלא מהמנוע (פנימי)",
     reasoning: "### מסלול החלטה (תמציתי)",
     ctx: "**הקשר שזוהה:**",
     sig: "**אותות עיקריים:**",
@@ -127,6 +130,9 @@ const T = {
     l4: "### 4) Recommended direction",
     l5: "### 5) Structured output",
     l5Body: "The section below is the full engine output (template + rules).",
+    l5BodyMinimalInternal:
+      "In **Internal** lens the main panel shows a minimal external shell only. The full engine body (internal) is appended at the end of this block.",
+    fullEngineHeader: "### Full engine body (internal)",
     reasoning: "### Decision trace (concise)",
     ctx: "**Detected context:**",
     sig: "**Main signals:**",
@@ -276,16 +282,66 @@ function templateWhy(templateKey, flavor, lang, pro) {
   return line;
 }
 
+const SHELL = {
+  he: {
+    title: "## מעטפת חיצונית (ממוזערת)",
+    intro:
+      "מסמך קצר לשיתוף חיצוני. ההיגיון המלא, רשימת הכללים והטקסט המלא מהמנוע נמצאים ב־**System Intelligence** (בלוק זה).",
+    direction: "כיוון שנבחר",
+    firstStep: "צעד מומלץ ראשון",
+    signals: "אותות מרכזיים",
+    moreInIntel: "לצעדים נוספים ולגרסה הפנימית המלאה — גלול בבלוק System Intelligence.",
+  },
+  en: {
+    title: "## External shell (minimal)",
+    intro:
+      "Short outward-facing layer. Full reasoning, matched rules, and the complete engine document are in **System Intelligence** (this block).",
+    direction: "Selected track",
+    firstStep: "Recommended first step",
+    signals: "Key signals",
+    moreInIntel: "For additional steps and the full internal document — scroll within System Intelligence.",
+  },
+};
+
+/**
+ * Minimal markdown for the main output panel when "Internal" lens is active.
+ * @param {object} res - analyze result (must include templateTitle, confidence, decision, analysis)
+ * @param {string} uiLang - UI language "he"|"en"
+ */
+export function buildMinimalExternalMarkdown(res, uiLang) {
+  const L = uiLang === "en" ? "en" : "he";
+  const shell = SHELL[L];
+  const outLang = res.outputLang === "en" ? "en" : "he";
+  const lines = [];
+  lines.push(shell.title);
+  lines.push("");
+  lines.push(shell.intro);
+  lines.push("");
+  const { tier, pct } = confTier(res.confidence, outLang);
+  const confBit = outLang === "en" ? `${tier} · ${pct}% fit` : `${tier} · ${pct}% התאמה`;
+  lines.push(`- **${shell.direction}:** ${res.templateTitle || "—"} (${confBit})`);
+  const pri = pickPriorityLine(res.decision, outLang);
+  if (pri) lines.push(`- **${shell.firstStep}:** ${pri}`);
+  const sigs = labelSignals(res.analysis?.signals || [], outLang, 6);
+  if (sigs.length) {
+    lines.push(`- **${shell.signals}:** ${sigs.join(outLang === "en" ? "; " : " · ")}`);
+  }
+  lines.push("");
+  lines.push(shell.moreInIntel);
+  return lines.join("\n");
+}
+
 /**
  * Deterministic "simulated intelligence" brief on top of rules output.
  * @param {object} res - computeResponse result
  * @param {string} reportText - raw user input
- * @param {{ experienceMode?: 'youth'|'pro' }} opts
+ * @param {{ experienceMode?: 'youth'|'pro', appendFullEngineOutput?: boolean }} opts
  */
 export function buildIntelBriefMarkdown(res, reportText, opts = {}) {
   const lang = res.outputLang === "en" ? "en" : "he";
   const t = T[lang];
   const pro = opts.experienceMode === "pro";
+  const appendFull = Boolean(opts.appendFullEngineOutput && res.fullMarkdown);
   const norm = normalize(reportText);
   const analysis = res.analysis || {};
   const decision = res.decision || {};
@@ -358,7 +414,7 @@ export function buildIntelBriefMarkdown(res, reportText, opts = {}) {
 
   lines.push("");
   lines.push(t.l5);
-  lines.push(t.l5Body);
+  lines.push(appendFull ? t.l5BodyMinimalInternal : t.l5Body);
 
   const sigLabs = labelSignals(signals, lang, 6);
   const sigJoined = sigLabs.length ? sigLabs.join(lang === "en" ? ", " : ", ") : t.noneSignals;
@@ -377,6 +433,13 @@ export function buildIntelBriefMarkdown(res, reportText, opts = {}) {
     lines.push(`${t.ctx} ${flavorText}`);
     lines.push(`${t.sig} ${sigJoined}`);
     lines.push(`${t.dir} ${dirLine}`);
+  }
+
+  if (appendFull) {
+    lines.push("");
+    lines.push(t.fullEngineHeader);
+    lines.push("");
+    lines.push(String(res.fullMarkdown || "").trimEnd());
   }
 
   return lines.join("\n");

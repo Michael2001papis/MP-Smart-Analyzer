@@ -1,6 +1,11 @@
 import { decide, evaluateRules, pickTemplate, normalize, assessReportUsability } from "./rules.js";
 import { getTemplates, getInvalidInputMarkdown } from "./templates.js";
-import { buildIntelBriefMarkdown, getInputTypeLabel, getSignalDisplayLabels } from "./intelLayer.js";
+import {
+  buildIntelBriefMarkdown,
+  buildMinimalExternalMarkdown,
+  getInputTypeLabel,
+  getSignalDisplayLabels,
+} from "./intelLayer.js";
 
 const $ = (id) => document.getElementById(id);
 const DEBUG = new URLSearchParams(window.location.search).has("debug");
@@ -229,6 +234,9 @@ const STRINGS = {
     perspectiveInternal: "פנימי",
     perspectiveExternal: "חיצוני",
     perspectiveNeutral: "נטרלי",
+    perspectiveInternalHint:
+      "מבט פנימי: הפלט הראשי מקוצר למעטפת חיצונית; המסמך המלא וההיגיון ב־System Intelligence.",
+    shellSummaryTag: "מעטפת פנימית",
     uiLangLabel: "ממשק",
     lblOutputLang: "שפת פלט",
     lblOutputType: "סוג פלט",
@@ -325,6 +333,9 @@ Backend: Express + MongoDB
     perspectiveInternal: "Internal",
     perspectiveExternal: "External",
     perspectiveNeutral: "Neutral",
+    perspectiveInternalHint:
+      "Internal lens: main panel is a minimal external shell; full document and reasoning live in System Intelligence.",
+    shellSummaryTag: "Internal shell",
     uiLangLabel: "UI",
     lblOutputLang: "Output language",
     lblOutputType: "Output type",
@@ -613,7 +624,8 @@ function setStructuredOutput(res, uiLang) {
   } else if (res.templateTitle && typeof res.confidence === "number") {
     const tier =
       res.confidence >= 0.75 ? s.confHigh : res.confidence >= 0.5 ? s.confMid : s.confLow;
-    els.outputSummaryLine.textContent = `${res.templateTitle} · ${tier} · ${Math.round(res.confidence * 100)}%`;
+    const base = `${res.templateTitle} · ${tier} · ${Math.round(res.confidence * 100)}%`;
+    els.outputSummaryLine.textContent = res.externalMinimal ? `${base} · ${s.shellSummaryTag}` : base;
   } else {
     els.outputSummaryLine.textContent = res.templateTitle || "—";
   }
@@ -833,6 +845,9 @@ function applyLanguageUI() {
   els.btnPerspectiveInternal.textContent = s.perspectiveInternal;
   els.btnPerspectiveExternal.textContent = s.perspectiveExternal;
   els.btnPerspectiveNeutral.textContent = s.perspectiveNeutral;
+  els.btnPerspectiveInternal.title = s.perspectiveInternalHint || "";
+  els.btnPerspectiveExternal.title = "";
+  els.btnPerspectiveNeutral.title = "";
   els.uiLangLabel.textContent = s.uiLangLabel;
   els.lblOutputLang.textContent = s.lblOutputLang;
   els.lblOutputType.textContent = s.lblOutputType;
@@ -927,41 +942,58 @@ function analyze() {
     }
 
     const res = computeResponse(reportText, lang, tone);
-    const markdown = typeof res.markdown === "string" ? res.markdown : String(res.markdown ?? "");
+    const fullMarkdown = typeof res.markdown === "string" ? res.markdown : String(res.markdown ?? "");
+    const perspective = getPerspective();
+    const useInternalShell = perspective === "internal" && !res.isRejectedInput;
+    const resForUi = useInternalShell
+      ? {
+          ...res,
+          markdown: buildMinimalExternalMarkdown({ ...res, fullMarkdown }, lang),
+          fullMarkdown,
+          externalMinimal: true,
+        }
+      : { ...res, markdown: fullMarkdown, fullMarkdown, externalMinimal: false };
 
-    els.output.value = markdown;
+    els.output.value = resForUi.markdown;
     setButtonsState();
 
     const experienceMode = document.body.classList.contains("mode-pro") ? "pro" : "youth";
-    setIntelBrief(buildIntelBriefMarkdown(res, reportText, { experienceMode }));
+    setIntelBrief(
+      buildIntelBriefMarkdown(resForUi, reportText, {
+        experienceMode,
+        appendFullEngineOutput: useInternalShell,
+      }),
+    );
 
     if (DEBUG) {
-      console.log("analyze_result", res);
+      console.log("analyze_result", resForUi);
     }
 
     setOutputInsights(
-      res.decision?.inputType,
-      res.isRejectedInput ? null : res.templateTitle,
-      res.confidence,
+      resForUi.decision?.inputType,
+      resForUi.isRejectedInput ? null : resForUi.templateTitle,
+      resForUi.confidence,
     );
-    setStructuredOutput(res, lang);
+    setStructuredOutput(resForUi, lang);
     els.debug.textContent = toPrettyJson({
-      templateKey: res.templateKey,
-      confidence: res.confidence,
-      decision: res.decision,
-      tone: res.tone,
-      outputLang: res.outputLang,
-      outputType: res.outputType,
-      matchedRules: res.analysis.matchedRules,
-      signals: res.analysis.signals,
-      scores: res.analysis.scores,
-      facts: res.analysis.facts,
-      inputQuality: res.quality,
-      rejectedInput: Boolean(res.isRejectedInput),
+      templateKey: resForUi.templateKey,
+      confidence: resForUi.confidence,
+      decision: resForUi.decision,
+      tone: resForUi.tone,
+      outputLang: resForUi.outputLang,
+      outputType: resForUi.outputType,
+      matchedRules: resForUi.analysis.matchedRules,
+      signals: resForUi.analysis.signals,
+      scores: resForUi.analysis.scores,
+      facts: resForUi.analysis.facts,
+      inputQuality: resForUi.quality,
+      rejectedInput: Boolean(resForUi.isRejectedInput),
       perspective: getPerspective(),
+      externalMinimal: Boolean(resForUi.externalMinimal),
+      fullMarkdownChars: resForUi.fullMarkdown ? resForUi.fullMarkdown.length : 0,
     });
 
-    if (res.isRejectedInput) {
+    if (resForUi.isRejectedInput) {
       setPanelsState({ input: "error", output: "normal", intel: "error" });
       els.panelOutput.classList.remove("flash");
       els.intelSection.classList.remove("flash-intel");

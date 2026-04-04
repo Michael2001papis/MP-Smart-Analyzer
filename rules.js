@@ -77,6 +77,38 @@ export const RULES = [
     signals: ["client"],
   },
 
+  /** Product / marketing-style briefs (not a status report) — enough signal to analyze without rejecting. */
+  {
+    id: "product_brief_intent",
+    whenAny: [
+      "אני רוצה",
+      "אני צריך",
+      "אנחנו רוצים",
+      "רוצה אתר",
+      "רוצים אתר",
+      "אתר ש",
+      "אתר עם",
+      "נדרש אתר",
+      "אתר מקצועי",
+      "עיצוב אתר",
+      "יכולות",
+      "מיתוג",
+      "חוויית משתמש",
+      "i want",
+      "i need",
+      "we need",
+      "looking for",
+      "need a website",
+      "want a website",
+      "landing page",
+      "professional website",
+      "site design",
+      "capabilities and",
+    ],
+    weights: { ui_ux_fix: 1.15, client_report: 0.95, general: 1.05 },
+    signals: ["uiux", "client"],
+  },
+
   // Fullstack
   {
     id: "fullstack_combo",

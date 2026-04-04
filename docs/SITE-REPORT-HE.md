@@ -1,5 +1,7 @@
 # דוח אתר — MP Smart Analyzer
 
+> **מיקום:** `docs/SITE-REPORT-HE.md` — שם נתיב ASCII לתאימות Git וכלים בכל מערכות ההפעלה.
+
 **תאריך:** 4 באפריל 2026  
 **סוג:** בדיקה מעמיקה (קוד סטטי + ארכיטקטורה)  
 **היקף:** כל קבצי הפרויקט (`index.html`, `app.js`, `rules.js`, `templates.js`, `style.css`)

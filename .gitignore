@@ -5,7 +5,9 @@ Desktop.ini
 *.swp
 *.swo
 .idea/
-.vscode/
+# Allow sharing extension hints; keep personal settings local
+.vscode/*
+!.vscode/extensions.json
 
 # Local / logs (if added later)
 *.log

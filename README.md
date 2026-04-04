@@ -37,12 +37,15 @@ npm test
 | שכבת “הבנה” טקסטואלית (מעל המנוע) | `intelLayer.js` |
 | ממשק, זרימה, אחסון מצבים | `index.html`, `style.css`, `app.js` |
 | בדיקות חוקים | `tests/rules.test.js` |
+| דוח אתר בעברית (ASCII path ל-Git) | `docs/SITE-REPORT-HE.md` |
+| רישיון / זכויות יוצרים | `LICENSE` |
+| המלצות הרחבות ל-Cursor/VS Code | `.vscode/extensions.json` |
 
 ---
 
 ### זכויות יוצרים
 
-**© 2026 Michael Papis.** כל הזכויות שמורות.
+**© 2026 Michael Papis.** כל הזכויות שמורות. פירוט משפטי: קובץ [`LICENSE`](LICENSE).
 
 מפתח הפרויקט ובעל זכויות היוצרים בקוד ובמסמכים המקוריים (למעט ספריות/כלים חיצוניים כפי שמוגדרים ברישיונותיהם).
 

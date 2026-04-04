@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MP Smart Analyzer</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <div class="brand">
+          <div class="logo">MP</div>
+          <div>
+            <div class="title">MP Smart Analyzer</div>
+            <div class="subtitle">דוח מצב → ניתוח → תשובה מקצועית מוכנה</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="btnSample" class="btn btn-secondary" type="button">טען דוגמה</button>
+          <button id="btnClear" class="btn btn-secondary" type="button">נקה</button>
+        </div>
+      </header>
+
+      <div class="status-row" aria-live="polite" aria-atomic="true">
+        <div id="status" class="status" role="status"></div>
+      </div>
+
+      <nav class="tabs" aria-label="תצוגה במובייל">
+        <button id="tabInput" class="tab is-active" type="button">קלט</button>
+        <button id="tabOutput" class="tab" type="button">פלט</button>
+      </nav>
+
+      <section class="grid">
+        <section class="panel" id="panelInput">
+          <div class="panel-header">
+            <div class="panel-title">קלט (דוח מצב)</div>
+            <div class="panel-meta">
+              <label class="inline">
+                <span>שפה</span>
+                <select id="lang">
+                  <option value="he" selected>עברית</option>
+                  <option value="en">English</option>
+                </select>
+              </label>
+              <label class="inline">
+                <span>שפת פלט</span>
+                <select id="outputLang">
+                  <option value="auto" selected>אוטומטי</option>
+                  <option value="he">עברית</option>
+                  <option value="en">English</option>
+                </select>
+              </label>
+              <label class="inline">
+                <span>סגנון</span>
+                <select id="tone">
+                  <option value="auto" selected>אוטומטי</option>
+                  <option value="professional">מקצועי</option>
+                  <option value="sharp">חד</option>
+                  <option value="client">ללקוח</option>
+                  <option value="cursor">ל‑AI (Cursor)</option>
+                </select>
+              </label>
+              <label class="inline">
+                <span>סוג פלט</span>
+                <select id="outputType">
+                  <option value="auto" selected>אוטומטי</option>
+                  <option value="instructions">הוראות ביצוע</option>
+                  <option value="summary">סיכום</option>
+                  <option value="client_report">דוח ללקוח</option>
+                  <option value="checklist">Checklist</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <textarea
+            id="report"
+            class="textarea"
+            aria-label="הדבק דוח"
+            placeholder="הדבק כאן דוח מצב (טקסט חופשי). למשל: דוח אתר, דוח תוכנה, UI, Backend, שגיאות build, טכנולוגיות..."
+          ></textarea>
+
+          <div class="panel-footer">
+            <div class="hint-wrap">
+              <div class="hint" id="inputHint">טיפ: ככל שהדוח כולל טכנולוגיות + שגיאות/לוגים, הסיווג יהיה מדויק יותר.</div>
+              <div class="meta-line">
+                <span id="charCount" class="counter">0 תווים</span>
+                <span id="lenBadge" class="badge">קצר</span>
+              </div>
+            </div>
+            <button id="btnAnalyze" class="btn btn-primary" type="button">נתח</button>
+          </div>
+        </section>
+
+        <section class="panel" id="panelOutput">
+          <div class="panel-header">
+            <div class="panel-title">פלט (תשובה מוכנה)</div>
+            <div class="panel-meta">
+              <div class="pill" id="pillTemplate">Template: —</div>
+              <div class="pill pill-confidence" id="pillConfidence">Confidence: —</div>
+            </div>
+          </div>
+
+          <div class="output-toolbar">
+            <button id="btnCopy" class="btn btn-secondary" type="button">העתק</button>
+            <button id="btnDownload" class="btn btn-secondary" type="button">הורד .md</button>
+          </div>
+
+          <textarea id="output" class="textarea textarea-output" aria-label="תוצאה מוכנה" readonly></textarea>
+
+          <details class="debug">
+            <summary>פירוט ניתוח (debug)</summary>
+            <pre id="debug" class="debug-box"></pre>
+          </details>
+        </section>
+      </section>
+
+      <footer class="footer">
+        <div>Local MVP — עובד מקומית, בלי שרת.</div>
+        <div class="footer-note">פתח/י את הקובץ <code>index.html</code> בדפדפן.</div>
+      </footer>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
